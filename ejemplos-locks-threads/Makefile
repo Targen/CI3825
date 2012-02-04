@@ -10,7 +10,7 @@ build-obj  = $(CC) $(COPTS) -c $<
 .PHONY: all clean
 
 all: $(execs)
-clean: ; rm -f $(EXECS) ./*.o
+clean: ; rm -f $(execs) ./*.o
 
 prodcons  : prodcons.o ; $(build-exec)
 prodcons.o: prodcons.c ; $(build-obj)
