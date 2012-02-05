@@ -4,114 +4,165 @@
 #include <stdlib.h>
 #include <sysexits.h>
 
-// TODO: productor/consumidor
+#define STACK_CAPACITY 2000
 
-// Variable compartida.
-int n;
+// Variable compartida: una pila de tamaño limitado.
+int stack[STACK_CAPACITY];
+int stack_size = 0;
 
-// Variable mutex para “n”.
-pthread_mutex_t mutex_stdout = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex_stack = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond_stack_readable = PTHREAD_COND_INITIALIZER;
+pthread_cond_t cond_stack_writable = PTHREAD_COND_INITIALIZER;
 
-// Datos pasados al hilo:
-struct thread_info {
-        pthread_t thread_id; // Identificador retornado por “pthread_create”.
-        int thread_num;      // Número de hilo (definido por la aplicación).
-        char * argv_string;  // Datos tomados del argumento de línea de comando.
-};
+int done = 0;
+pthread_mutex_t mutex_done = PTHREAD_MUTEX_INITIALIZER;
 
-// Función que se ejecutará en cada hilo:
-void * thread_start(void * arg) {
+void * productor(void * arg) {
+        int times = *((int *)arg);
+        int n = 0;
         int s;
-        struct thread_info * tinfo = (struct thread_info *)arg;
-        int * ret;
 
-        // Crear un objeto en memoria dinámica para retornar al hilo principal el valor nuevo de la variable compartida:
-        ret = calloc(1, sizeof(int));
-        if (ret == NULL) {
-                perror("calloc");
-                exit(EX_OSERR);
+        int i;
+        for (i = 0; i < times; ++i) {
+                s = pthread_mutex_lock(&mutex_stack);
+                if (s != 0) {
+                        // Si el código del programa está bien, esto nunca debería suceder.  Sin embargo, esta verificación puede ayudar a detectar errores de programación.
+                        errno = s;
+                        perror("Error intentando entrar en la sección crítica del productor; pthread_mutex_lock: ");
+                        exit(EX_SOFTWARE);
+                }
+
+                // Mientras NO haya espacio libre en la pila…
+                while (!(stack_size < STACK_CAPACITY)) {
+                        // …esperamos a que se libere espacio.  Cuando se entra a esta función, atómicamente se libera el mutex y se comienza a esperar por un signal sobre la condición.
+                        s = pthread_cond_wait(&cond_stack_writable, &mutex_stack);
+                        if (s != 0) {
+                                // Si el código del programa está bien, esto nunca debería suceder.  Sin embargo, esta verificación puede ayudar a detectar errores de programación.
+                                errno = s;
+                                perror("Error intentando entrar en la sección crítica del productor; pthread_mutex_lock: ");
+                                exit(EX_SOFTWARE);
+                        }
+                        // Al ocurrir un signal sobre esta condición, esta función adquiere de nuevo el mutex y retorna.  Si otro productor no se nos adelantó, la condición del ciclo no se cumplirá (porque seremos los primeros en ver el nuevo espacio disponible en la pila) y saldremos del ciclo.
+                }
+
+                { // Sección crítica:
+                        ++n;
+                        stack[stack_size] = n;
+                        printf("Productor: empilé %d en la posición %d.\n", n, stack_size);
+                        ++stack_size;
+                        pthread_cond_broadcast(&cond_stack_readable); // Como empilé un valor, ahora hay un dato disponible para leer en la pila.
+
+                        // Si estamos en la última iteración del ciclo, hay que avisar al consumidor que terminamos de escribir todos los datos.
+                        if (i == times - 1) done = 1;
+                }
+
+                s = pthread_mutex_unlock(&mutex_stack);
+                if (s != 0) {
+                        // Si el código del programa está bien, esto nunca debería suceder.  Sin embargo, esta verificación puede ayudar a detectar errores de programación.
+                        errno = s;
+                        perror("Error intentando salir de la sección crítica del productor; pthread_mutex_unlock: ");
+                        exit(EX_SOFTWARE);
+                }
         }
 
-        s = pthread_mutex_lock(&mutex_stdout);
-        if (s != 0) {
-                // Si el código del programa está bien, esto nunca debería suceder.
-                // Sin embargo, esta verificación puede ayudar a detectar errores de programación.
-                fprintf(stderr, "Error intentando entrar en la sección crítica del hilo %d; pthread_mutex_lock: ", tinfo->thread_num);
-                errno = s;
-                perror(NULL);
-                exit(EX_OSERR);
+        pthread_exit(NULL);
+}
+
+void * consumidor(void * arg) {
+        int n = 0;
+        int s;
+
+        while (1) {
+                s = pthread_mutex_lock(&mutex_stack);
+                if (s != 0) {
+                        // Si el código del programa está bien, esto nunca debería suceder.  Sin embargo, esta verificación puede ayudar a detectar errores de programación.
+                        errno = s;
+                        perror("Error intentando entrar en la sección crítica del consumidor; pthread_mutex_lock: ");
+                        exit(EX_SOFTWARE);
+                }
+
+                // Mientras NO haya datos en la pila…
+                while (!(stack_size > 0)) {
+                        // …primero, verificamos si el productor nos avisó que ya no escribirá más datos a la pila.
+                        // Aunque no está indicado explícitamente, al ejecutar esto tenemos el mutex, así que estamos dentro de una sección crítica.
+                        if (done) {
+                                s = pthread_mutex_unlock(&mutex_stack);
+                                if (s != 0) {
+                                        // Si el código del programa está bien, esto nunca debería suceder.  Sin embargo, esta verificación puede ayudar a detectar errores de programación.
+                                        errno = s;
+                                        perror("Error intentando salir de la sección crítica del consumidor; pthread_mutex_unlock: ");
+                                        exit(EX_SOFTWARE);
+                                }
+
+                                pthread_exit(NULL);
+                        }
+
+                        // …luego, si no nos salimos, esperamos a que alguien inserte datos.  Cuando se entra a esta función, atómicamente se libera el mutex y se comienza a esperar por un signal sobre la condición.
+                        s = pthread_cond_wait(&cond_stack_readable, &mutex_stack);
+                        if (s != 0) {
+                                // Si el código del programa está bien, esto nunca debería suceder.  Sin embargo, esta verificación puede ayudar a detectar errores de programación.
+                                errno = s;
+                                perror("Error intentando entrar en la sección crítica del consumidor; pthread_mutex_lock: ");
+                                exit(EX_SOFTWARE);
+                        }
+                        // Al ocurrir un signal sobre esta condición, esta función adquiere de nuevo el mutex y retorna.  Si otro consumidor no se nos adelantó, la condición del ciclo no se cumplirá (porque seremos los primeros en ver el nuevo dato disponible en la pila) y saldremos del ciclo.
+                }
+
+                { // Sección crítica:
+                        n = stack[stack_size - 1];
+                        printf("Consumidor: desempilé %d de la posición %d.\n", n, stack_size - 1);
+                        --stack_size;
+                        pthread_cond_broadcast(&cond_stack_writable); // Como desempilé un valor, ahora hay un espacio disponible para escribir en la pila.
+                }
+
+                s = pthread_mutex_unlock(&mutex_stack);
+                if (s != 0) {
+                        // Si el código del programa está bien, esto nunca debería suceder.  Sin embargo, esta verificación puede ayudar a detectar errores de programación.
+                        errno = s;
+                        perror("Error intentando salir de la sección crítica del consumidor; pthread_mutex_unlock: ");
+                        exit(EX_SOFTWARE);
+                }
         }
 
-        { // Sección crítica:
-                ++n;
-                *ret = n;
-                printf("Hilo %d (argv_string == %s): incrementé “n” a %d\n", tinfo->thread_num, tinfo->argv_string, n);
-        }
-
-        s = pthread_mutex_unlock(&mutex_stdout);
-        if (s != 0) {
-                // Si el código del programa está bien, esto nunca debería suceder.
-                // Sin embargo, esta verificación puede ayudar a detectar errores de programación.
-                fprintf(stderr, "Error intentando salir de la sección crítica del hilo %d; pthread_mutex_unlock: ", tinfo->thread_num);
-                errno = s;
-                perror(NULL);
-                exit(EX_SOFTWARE);
-        }
-
-        // Retornar la dirección del objeto que este hilo reservó en memoria dinámica; otro hilo deberá liberar su memoria:
-        pthread_exit(ret);
+        pthread_exit(NULL);
 }
 
 int main(int argc, char * argv[]) {
-        int s, tnum, num_threads;
-        struct thread_info * tinfo;
-        void * res;
+        int s;
+        pthread_t tid_productor, tid_consumidor;
+        int times = 100000;
 
-        // No se considera el argumento cero (que normalmente contiene el nombre del programa).
-        num_threads = argc - 1;
+        // TODO: tomar times y STACK_SIZE de argumentos (y usar calloc para la pila, claro
 
-        // Reservar memoria para los datos de todos los hilos:
-        tinfo = calloc(num_threads, sizeof(struct thread_info));
-        if (tinfo == NULL) {
-                perror("No fue posible reservar memoria para los datos de todos los hilos; calloc");
+        // Crear los hilos productor y consumidor:
+        s = pthread_create(&tid_productor, NULL, &productor, &times);
+        if (s != 0) {
+                errno = s;
+                perror("No fue posible crear hilo productor; pthread_create: ");
                 exit(EX_OSERR);
         }
 
-        // Crear un hilo para cada argumento de línea de comando:
-        for (tnum = 0; tnum < num_threads; ++tnum) {
-                tinfo[tnum].thread_num = tnum + 1;
-                tinfo[tnum].argv_string = argv[tnum + 1];
-
-                // The pthread_create() call stores the thread ID into the corresponding element of tinfo[].
-                s = pthread_create(&tinfo[tnum].thread_id, NULL, &thread_start, &tinfo[tnum]);
-                if (s != 0) {
-                        fprintf(stderr, "No fue posible crear el hilo %d; pthread_create: ", tnum + 1);
-                        errno = s;
-                        perror(NULL);
-                        exit(EX_OSERR);
-                }
+        s = pthread_create(&tid_consumidor, NULL, &consumidor, NULL);
+        if (s != 0) {
+                errno = s;
+                perror("No fue posible crear hilo consumidor; pthread_create: ");
+                exit(EX_OSERR);
         }
 
-        // Esperar por la terminación de cada hilo en orden inverso al de creación e imprimir el dato que retorna.
-        for (tnum = num_threads - 1; 0 <= tnum; --tnum) {
-                s = pthread_join(tinfo[tnum].thread_id, &res);
-                if (s != 0) {
-                        fprintf(stderr, "No fue posible esperar por la terminación del hilo %d; pthread_join: ", tnum + 1);
-                        errno = s;
-                        perror(NULL);
-                        exit(EX_OSERR);
-                }
-
-                if (res == PTHREAD_CANCELED) {
-                        // Esto nunca pasa en este programa y solo está escrito acá por razones demostrativas.
-                        printf("El hilo %d fue cancelado.\n", tinfo[tnum].thread_num);
-                }
-                else printf("El hilo principal hizo join con el hilo %d, que retornó el entero %d.\n", tinfo[tnum].thread_num, *((int *)res));
-
-                // Liberar la memoria reservada por el hilo para retornar datos:
-                free(res);
+        // Esperar por la terminación de los hilos:
+        s = pthread_join(tid_productor, NULL);
+        if (s != 0) {
+                errno = s;
+                perror("No fue posible esperar por la terminación del hilo productor; pthread_join: ");
+                exit(EX_OSERR);
         }
 
-        free(tinfo);
+        s = pthread_join(tid_consumidor, NULL);
+        if (s != 0) {
+                errno = s;
+                perror("No fue posible esperar por la terminación del hilo consumidor; pthread_join: ");
+                exit(EX_OSERR);
+        }
+
         exit(EX_OK);
 }
