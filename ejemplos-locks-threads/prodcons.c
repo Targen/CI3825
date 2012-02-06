@@ -4,17 +4,20 @@
 #include <stdlib.h>
 #include <sysexits.h>
 
-#define STACK_CAPACITY 2000
+// Variables compartidas:
 
-// Variable compartida: una pila de tamaño limitado.
-int stack[STACK_CAPACITY];
-int stack_size = 0;
+// • Una pila de enteros con capacidad limitada.
+int stack_capacity;
+int * stack;
+int stack_size;
+
+// • Un booleano para indicar que no se empilarán más datos.
+int done;
 
 pthread_mutex_t mutex_stack = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond_stack_readable = PTHREAD_COND_INITIALIZER;
 pthread_cond_t cond_stack_writable = PTHREAD_COND_INITIALIZER;
 
-int done = 0;
 pthread_mutex_t mutex_done = PTHREAD_MUTEX_INITIALIZER;
 
 void * productor(void * arg) {
@@ -33,7 +36,7 @@ void * productor(void * arg) {
                 }
 
                 // Mientras NO haya espacio libre en la pila…
-                while (!(stack_size < STACK_CAPACITY)) {
+                while (!(stack_size < stack_capacity)) {
                         // …esperamos a que se libere espacio.  Cuando se entra a esta función, atómicamente se libera el mutex y se comienza a esperar por un signal sobre la condición.
                         s = pthread_cond_wait(&cond_stack_writable, &mutex_stack);
                         if (s != 0) {
@@ -130,9 +133,33 @@ void * consumidor(void * arg) {
 int main(int argc, char * argv[]) {
         int s;
         pthread_t tid_productor, tid_consumidor;
-        int times = 100000;
+        int times;
 
-        // TODO: tomar times y STACK_SIZE de argumentos (y usar calloc para la pila, claro
+        if (argc != 3) {
+                fprintf(
+                        stderr,
+                        "Uso: %s productos tamaño\n"
+                        "\n"
+                        "Crea dos hilos:\n"
+                        "• Un productor que empila “productos” productos a una pila de tamaño “tamaño”, y\n"
+                        "• Un consumidor que desempila aquello que el productor empiló hasta que la pila quede vacía y el productor haya avisado que no empilará más productos.\n",
+                        argv[0]
+                );
+                exit(EX_USAGE);
+        }
+
+        // TODO: tomar times y stack_capacity de argumentos
+        times = 100000;
+
+        // Inicializar las variables compartidas:
+        done = 0;
+        stack_capacity = 200;
+        stack = calloc(stack_capacity, sizeof(int));
+        if (stack == NULL) {
+                perror("No fue posible reservar memoria para la pila; calloc");
+                exit(EX_OSERR);
+        }
+        stack_size = 0;
 
         // Crear los hilos productor y consumidor:
         s = pthread_create(&tid_productor, NULL, &productor, &times);
