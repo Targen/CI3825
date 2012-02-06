@@ -1,4 +1,5 @@
 #include <errno.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -148,12 +149,34 @@ int main(int argc, char * argv[]) {
                 exit(EX_USAGE);
         }
 
-        // TODO: tomar times y stack_capacity de argumentos
-        times = 100000;
+        {
+                unsigned long int times_ul;
+                errno = 0;
+                times_ul = strtoul(argv[1], NULL, 0);
+                if (errno != 0 || times_ul > INT_MAX) {
+                        fprintf(stderr, "El primer argumento de línea de comandos debería ser un entero positivo menor que %d; strtoul: ", INT_MAX);
+                        perror(NULL);
+                        exit(EX_USAGE);
+                }
+                times = times_ul;
+        }
+
+        {
+                unsigned long int stack_capacity_ul;
+                errno = 0;
+                stack_capacity_ul = strtoul(argv[2], NULL, 0);
+                if (errno != 0 || stack_capacity_ul > INT_MAX) {
+                        fprintf(stderr, "El segundo argumento de línea de comandos debería ser un entero positivo menor que %d; strtoul: ", INT_MAX);
+                        perror(NULL);
+                        exit(EX_USAGE);
+                }
+                stack_capacity = stack_capacity_ul;
+        }
+
+        fprintf(stderr, "%d\n%d\n", times, stack_capacity); // DEBUG
 
         // Inicializar las variables compartidas:
         done = 0;
-        stack_capacity = 200;
         stack = calloc(stack_capacity, sizeof(int));
         if (stack == NULL) {
                 perror("No fue posible reservar memoria para la pila; calloc");
