@@ -17,9 +17,66 @@ struct thread_info {
         char * argv_string;  // Datos tomados del argumento de línea de comando.
 };
 
+#define LOCK(mutex)                                                                                                \
+        do {                                                                                                       \
+                int s = pthread_mutex_lock(&mutex);                                                                \
+                if (s != 0) {                                                                                      \
+                        fprintf(                                                                                   \
+                                stderr,                                                                            \
+                                "Error intentando entrar en la sección crítica del hilo %d; pthread_mutex_lock: ", \
+                                tinfo->thread_num                                                                  \
+                        );                                                                                         \
+                        errno = s;                                                                                 \
+                        perror(NULL);                                                                              \
+                        exit(EX_SOFTWARE);                                                                         \
+                }                                                                                                  \
+        } while (0)
+
+#define UNLOCK(mutex)                                                                                               \
+        do {                                                                                                        \
+                int s = pthread_mutex_unlock(&mutex);                                                               \
+                if (s != 0) {                                                                                       \
+                        fprintf(                                                                                    \
+                                stderr,                                                                             \
+                                "Error intentando salir de la sección crítica del hilo %d; pthread_mutex_unlock: ", \
+                                tinfo->thread_num                                                                   \
+                        );                                                                                          \
+                        errno = s;                                                                                  \
+                        perror(NULL);                                                                               \
+                        exit(EX_SOFTWARE);                                                                          \
+                }                                                                                                   \
+        } while (0)
+
+void lock(pthread_mutex_t * mutex, int thread_num) {
+        int s = pthread_mutex_lock(mutex);
+        if (s != 0) {
+                fprintf(
+                        stderr,
+                        "Error intentando entrar en la sección crítica del hilo %d; pthread_mutex_unlock: ",
+                        thread_num
+                );
+                errno = s;
+                perror(NULL);
+                exit(EX_SOFTWARE);
+        }
+}
+
+void unlock(pthread_mutex_t * mutex, int thread_num) {
+        int s = pthread_mutex_unlock(mutex);
+        if (s != 0) {
+                fprintf(
+                        stderr,
+                        "Error intentando salir de la sección crítica del hilo %d; pthread_mutex_unlock: ",
+                        thread_num
+                );
+                errno = s;
+                perror(NULL);
+                exit(EX_SOFTWARE);
+        }
+}
+
 // Función que se ejecutará en cada hilo:
 void * thread_start(void * arg) {
-        int s;
         struct thread_info * tinfo = (struct thread_info *)arg;
         int * ret;
 
@@ -30,31 +87,15 @@ void * thread_start(void * arg) {
                 exit(EX_OSERR);
         }
 
-        s = pthread_mutex_lock(&mutex_stdout);
-        if (s != 0) {
-                // Si el código del programa está bien, esto nunca debería suceder.
-                // Sin embargo, esta verificación puede ayudar a detectar errores de programación.
-                fprintf(stderr, "Error intentando entrar en la sección crítica del hilo %d; pthread_mutex_lock: ", tinfo->thread_num);
-                errno = s;
-                perror(NULL);
-                exit(EX_OSERR);
-        }
-
+        //lock(&mutex_stdout, tinfo->thread_num);
+        LOCK(mutex_stdout);
         { // Sección crítica:
                 ++n;
                 *ret = n;
                 printf("Hilo %d (argv_string == %s): incrementé “n” a %d\n", tinfo->thread_num, tinfo->argv_string, n);
         }
-
-        s = pthread_mutex_unlock(&mutex_stdout);
-        if (s != 0) {
-                // Si el código del programa está bien, esto nunca debería suceder.
-                // Sin embargo, esta verificación puede ayudar a detectar errores de programación.
-                fprintf(stderr, "Error intentando salir de la sección crítica del hilo %d; pthread_mutex_unlock: ", tinfo->thread_num);
-                errno = s;
-                perror(NULL);
-                exit(EX_SOFTWARE);
-        }
+        //unlock(&mutex_stdout, tinfo->thread_num);
+        UNLOCK(mutex_stdout);
 
         // Retornar la dirección del objeto que este hilo reservó en memoria dinámica; otro hilo deberá liberar su memoria:
         pthread_exit(ret);
