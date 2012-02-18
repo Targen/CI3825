@@ -1,0 +1,2 @@
+#/usr/bin/env bash
+find . -mindepth 1 -type d -exec bash -c 'cd {} && { printf "%s\n" "srcs = \$(wildcard *.c)" "objs = \$(srcs:%.c=%.o)" "all: arc.a" "arc.a: \$(objs) ; ar rT \$@ \$?" > Makefile; for i in *.c; do gcc -MM "$i" >> Makefile; done; }' \;

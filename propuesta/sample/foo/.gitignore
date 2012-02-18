@@ -1,0 +1,7 @@
+*~
+.*.swp*
+tags
+*.gch
+*.o
+*.a
+Makefile
