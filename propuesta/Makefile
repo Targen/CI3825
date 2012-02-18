@@ -1,4 +1,5 @@
-pandoc      = pandoc
+pandoc = pandoc
+
 pandocflags =               \
         --normalize         \
         --preserve-tabs     \
@@ -7,8 +8,21 @@ pandocflags =               \
         --section-divs      \
         --standalone
 
-all: proyecto2.pdf proyecto2.html proyecto2.txt
+pandocrule = $(pandoc) $(pandocflags) -o $@ $<
 
-%.pdf : %.md ; $(pandoc) $(pandocflags) --latex-engine=xelatex -H tocname.tex -o $@ $<
-%.txt : %.md ; $(pandoc) $(pandocflags) -o $@ $<
-%.html: %.md ; $(pandoc) $(pandocflags) -o $@ $<
+files = $(formats:%=proyecto2.%)
+
+formats = txt html pdf
+
+
+
+.PHONY: all clean
+
+all: $(files)
+
+clean:
+	rm -f $(files)
+
+%.txt : %.md ; $(pandocrule)
+%.html: %.md ; $(pandocrule)
+%.pdf : %.md ; $(pandocrule) --latex-engine=xelatex -H tocname.tex
