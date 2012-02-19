@@ -8,15 +8,19 @@ pandocflags :=              \
         --standalone        \
         --table-of-contents
 
-pandocrule := $(pandoc) $(pandocflags) -o $@ $<
-
-files := $(formats:%=proyecto2.%)
-
 formats := txt html pdf
 
 clean-formats := aux log out toc
 
 pandoc-latex-args := --latex-engine=xelatex -H header.tex
+
+files := $(formats:%=proyecto2.%)
+
+pandocrule = \
+        sed < $<                                                   \
+                -e 's/^@\(@[^@]\+\)*@$(suffix $@)\(@[^@]\+\)*@@//' \
+                -e '/^@\(@[^@]\+\)\+@@/d'                          \
+        | $(pandoc) $(pandocflags) -o $@
 
 
 
@@ -26,6 +30,8 @@ all: $(files)
 
 clean:
 	rm -f $(clean-formats:%=*.%) $(files)
+
+
 
 %.txt : %.md ; $(pandocrule)
 %.html: %.md ; $(pandocrule)

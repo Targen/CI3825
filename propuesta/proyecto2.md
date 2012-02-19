@@ -8,7 +8,8 @@
 
 Este documento es un borrador, y se espera que tenga deficiencias de diseño, del redacción, orthografícas y d*e* t**ipo**g^r^a~~f~~~ía~.
 
-- - -
+@@.txt@.html@@- - -
+@@.pdf@.tex@@\newpage
 
 # Introducción
 
@@ -155,7 +156,8 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 
 
-- - -
+@@.txt@.html@@- - -
+@@.pdf@.tex@@\pagebreak
 
 
 
@@ -211,7 +213,8 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 
 
-- - -
+@@.txt@.html@@- - -
+@@.pdf@.tex@@\pagebreak
 
 
 
@@ -219,7 +222,9 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 *Esta sección es informativa.*
 
-Este proyecto está diseñado para instruir en el uso del lenguaje C, herramientas de desarrollo de software como `make` y `gcc`, y la interfaz de programación de los sistemas operativos que implementan los estándares [POSIX], y particularmente todo lo relacionado con el acceso a archivos y directorios y la comunicación entre procesos.  El diseño del proyecto, y por lo tanto de la herramienta que usted debe implementar, está orientado a ese propósito educativo y no necesariamente obedece a los criterios de diseño adecuados para la creación de un *build system*.  En particular, aunque el uso recursivo de `make` que este proyecto propone es sin duda muy similar a las prácticas comunes de muchos proyectos de software de gran envergadura, esta técnica sufre de problemas importantes y hay buenas razones para *no* usarla.  Varios de estos problemas se exploran en [Miller, 1997] (disponible en [PDF](http://aegis.sourceforge.net/auug97.pdf)); ese artículo es un buen comienzo si es de su interés conocer la manera *correcta* de usar `make` con proyectos divididos en múltiples directorios.
+1.  Este proyecto está diseñado para instruir en el uso del lenguaje C, herramientas de desarrollo de software como `make` y `gcc`, y la interfaz de programación de los sistemas operativos que implementan los estándares [POSIX], y particularmente todo lo relacionado con el acceso a archivos y directorios y la comunicación entre procesos.  El diseño del proyecto, y por lo tanto de la herramienta que usted debe implementar, está orientado a ese propósito educativo y no necesariamente obedece a los criterios de diseño adecuados para la creación de un *build system*.
+
+2.  En particular, aunque el uso recursivo de `make` que este proyecto propone es sin duda muy similar a las prácticas comunes de muchos proyectos de software de gran envergadura, esta técnica sufre de problemas importantes y hay buenas razones para *no* usarla.  Varios de estos problemas se exploran en [Miller, 1997] (disponible en [PDF](http://aegis.sourceforge.net/auug97.pdf)); ese artículo es un buen comienzo si es de su interés conocer la manera *correcta* de usar `make` con proyectos divididos en múltiples directorios.
 
 [POSIX]: <http://pubs.opengroup.org/onlinepubs/9699919799>
 (Documentos de POSIX.1‐2008 (también llamado “IEEE Std 1003.1™‐2008”, o “The Open Group Technical Standard Base Specifications, Issue 7”))
