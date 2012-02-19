@@ -189,7 +189,7 @@
 
 8.  `rautomake` puede suponer que no existe ningún archivo dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre termine en “.d”.  Si tales archivos existen, `rautomake` puede eliminarlos o sobreescribirlos para cualquier fin.  `rautomake` no será ejecutado en un directorio donde existan tales archivos y `rautomake` no tenga permiso de lectura y escritura sobre esos archivos.  `rautomake` no será ejecutado en un directorio cuyo nombre termine en “.d”, ni que tenga algún subdirectorio cuyo nombre termine en “.d”.
 
-9.  Un proceso de `rautomake` no puede visitar, abrir ni manipular más de un directorio a lo largo de su ejecución.  Si `rautomake` requiere visitar, abrir o manipular más de un directorio, deberá copiarse a sí mismo y una de sus copias podrá visitar, abrir o manipular un directorio distinto al visitado, abierto o manipulado por el proceso original.
+9.  Un proceso de `rautomake` no puede visitar, abrir ni manipular más de un directorio a lo largo de su ejecución, a menos que ese proceso sea un compilador de C.  Si un proceso de `rautomake` que no sea un compilador de C requiere visitar, abrir o manipular más de un directorio, deberá copiarse a sí mismo y una de sus copias podrá visitar, abrir o manipular un directorio distinto al visitado, abierto o manipulado por el proceso original.
 
 10. La comunicación entre varios procesos resultantes de una ejecución de `rautomake` solo podrá hacerse a través de *pipes* no nominales y/o señales del sistema operativo, a menos que uno de los procesos involucrados sea un compilador de C, en cuyo caso es aceptable la comunicación a través de archivos.
 
