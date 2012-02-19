@@ -4,6 +4,12 @@
 
 - - -
 
+**Este documento es solo una propuesta y no contiene requerimientos para ninguna evaluación.  No debe suponerse que alguna evaluación vaya a ser basada en él a menos que sea publicado oficialmente por los profesores a cargo del curso; en ese caso, la versión normativa del documento será la que se publique, que no contendrá esta nota, y esta versión será considerada inválida y no deberá ser usada como referencia para ningún propósito.**
+
+Este documento es un borrador, y se espera que tenga deficiencias de diseño, del redacción, orthografícas y d*e* t**ipo**g^r^a~~f~~~ía~.
+
+- - -
+
 # Introducción
 
 *Esta sección es informativa.*
@@ -30,21 +36,21 @@
 
     1.  Los `Makefile`s simples para compilar alguno de sus proyectos pueden ser considerados *build system*s: son programas que describen el proceso de construcción de los ejecutables de sus proyectos.
 
-    2.  El programa que interpreta sus `Makefile`s y ejecuta acciones descritas en ellos, [make][], también puede considerarse un *build system*.
+    2.  El programa que interpreta sus `Makefile`s y ejecuta acciones descritas en ellos, [make], también puede considerarse un *build system*.
 
-    3.  Existen *build system*s que trabajan a un nivel más alto, como [GNU Automake][] y [GNU Autoconf][] que son dos de los componentes del [GNU build system], también conocido como *Autotools*.  Este sistema puede generar `Makefile`s automáticamente ajustados a las peculiaridades de cada tipo de sistema UNIX, lo que lo hace adecuado para proyectos de gran escala que deban funcionar en múltiples plataformas.
+    3.  Existen *build system*s que trabajan a un nivel más alto, como [GNU Automake] y [GNU Autoconf] que son dos de los componentes del [GNU build system], también conocido como *Autotools*.  Este sistema puede generar `Makefile`s automáticamente ajustados a las peculiaridades de cada tipo de sistema UNIX, lo que lo hace adecuado para proyectos de gran escala que deban funcionar en múltiples plataformas.
 
 [make]: <https://www.gnu.org/software/make>
-        GNU Make: la implementación del proyecto GNU del build system básico tradicionalmente encontrado en UNIX.
+(GNU Make: la implementación del proyecto GNU del build system básico tradicionalmente encontrado en UNIX.)
 
 [GNU Automake]: <https://www.gnu.org/software/automake>
-        GNU Automake: un componente del GNU build system.
+(GNU Automake: un componente del GNU build system.)
 
 [GNU Autoconf]: <https://www.gnu.org/software/autoconf>
-        GNU Autoconf: un componente del GNU build system.
+(GNU Autoconf: un componente del GNU build system.)
 
 [GNU build system]: <https://www.gnu.org/software/automake/manual/html_node/GNU-Build-System>
-        Una breve descripción del GNU build system y su motivación.
+(Una breve descripción del GNU build system y su motivación.)
 
 
 
@@ -202,3 +208,21 @@
 2.  La entrega consistirá de un archivo en formato `tar.gz` o `tar.bz2` que contenga todo el código que haya desarrollado y sea necesario para compilar su programa.  No debe incluir archivos compilados.  Su proyecto debe poder compilarse extrayendo los archivos del paquete de su entrega, entrando en el directorio generado por la extracción, y ejecutando el comando `make`; es decir que *debe* incluir al menos un `Makefile` para automatizar la compilación de su proyecto.
 
 3.  Aunque en general es preferible que su código sea compatible con los documentos de estandarización más recientes publicados para cada tecnología que utilice, es aceptable que requiera y use extensiones propias de la implementación de las herramientas de la plataforma GNU/Linux tanto del lenguaje de programación C como de la interfaz con el sistema operativo.  Es aceptable que requiera alguna versión de las herramientas del sistema diferente de las que están instaladas y disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux, y en particular de lo que esté instalado y disponible en las computadoras del LDC, pero deberá justificar estos requerimientos adicionales.
+
+
+
+- - -
+
+
+
+# Información adicional
+
+*Esta sección es informativa.*
+
+Este proyecto está diseñado para instruir en el uso del lenguaje C, herramientas de desarrollo de software como `make` y `gcc`, y la interfaz de programación de los sistemas operativos que implementan los estándares [POSIX], y particularmente todo lo relacionado con el acceso a archivos y directorios y la comunicación entre procesos.  El diseño del proyecto, y por lo tanto de la herramienta que usted debe implementar, está orientado a ese propósito educativo y no necesariamente obedece a los criterios de diseño adecuados para la creación de un *build system*.  En particular, aunque el uso recursivo de `make` que este proyecto propone es sin duda muy similar a las prácticas comunes de muchos proyectos de software de gran envergadura, esta técnica sufre de problemas importantes y hay buenas razones para *no* usarla.  Varios de estos problemas se exploran en [Miller, 1997] (disponible en [PDF](http://aegis.sourceforge.net/auug97.pdf)); ese artículo es un buen comienzo si es de su interés conocer la manera *correcta* de usar `make` con proyectos divididos en múltiples directorios.
+
+[POSIX]: <http://pubs.opengroup.org/onlinepubs/9699919799>
+(Documentos de POSIX.1‐2008 (también llamado “IEEE Std 1003.1™‐2008”, o “The Open Group Technical Standard Base Specifications, Issue 7”))
+
+[Miller, 1997]: <http://miller.emu.id.au/pmiller/books/rmch/>
+(Peter Miller — Recursive make considered harmful (1997))

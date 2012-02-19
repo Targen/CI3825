@@ -1,18 +1,22 @@
-pandoc = pandoc
+pandoc := pandoc
 
-pandocflags =               \
+pandocflags :=              \
         --normalize         \
-        --preserve-tabs     \
-        --table-of-contents \
         --number-sections   \
+        --preserve-tabs     \
         --section-divs      \
-        --standalone
+        --standalone        \
+        --table-of-contents
 
-pandocrule = $(pandoc) $(pandocflags) -o $@ $<
+pandocrule := $(pandoc) $(pandocflags) -o $@ $<
 
-files = $(formats:%=proyecto2.%)
+files := $(formats:%=proyecto2.%)
 
-formats = txt html pdf
+formats := txt html pdf
+
+clean-formats := aux log out toc
+
+pandoc-latex-args := --latex-engine=xelatex -H header.tex
 
 
 
@@ -21,8 +25,11 @@ formats = txt html pdf
 all: $(files)
 
 clean:
-	rm -f $(files)
+	rm -f $(clean-formats:%=*.%) $(files)
 
 %.txt : %.md ; $(pandocrule)
 %.html: %.md ; $(pandocrule)
-%.pdf : %.md ; $(pandocrule) --latex-engine=xelatex -H tocname.tex
+%.pdf : %.md ; $(pandocrule) $(pandoc-latex-args)
+%.tex : %.md ; $(pandocrule) $(pandoc-latex-args)
+
+proyecto2.pdf proyecto2.tex: header.tex

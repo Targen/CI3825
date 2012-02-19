@@ -1,11 +1,11 @@
-CC    = gcc
-COPTS = -Wall -O3
+CC    := gcc
+COPTS := -Wall -O3
 
-subdirs = foo bar
-subarcs = $(subdirs:%=%/arc.a)
+subdirs := foo bar
+subarcs := $(subdirs:%=%/arc.a)
 
-srcs = $(wildcard *.c)
-objs = $(srcs:%.c=%.o)
+srcs := $(wildcard *.c)
+objs := $(srcs:%.c=%.o)
 
 .PHONY: all clean $(subdirs) force
 
@@ -21,3 +21,6 @@ $(subarcs): force
 
 foobar: $(objs) $(subarcs)
 	gcc -o foobar $(objs) $(subarcs)
+
+main.o: main.c foo/foo.h bar/bar.h f.h
+f.o: f.c f.h
