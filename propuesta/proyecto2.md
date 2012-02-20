@@ -8,8 +8,12 @@
 
 Este documento es un borrador, y se espera que tenga deficiencias de diseño, del redacción, orthografícas y d*e* t**ipo**g^r^a~~f~~~ía~.
 
+
+
 @@.txt@.html@@- - -
 @@.pdf@.tex@@\newpage
+
+
 
 # Introducción
 
@@ -19,15 +23,13 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 ## Objetivos
 
-1.  Los objetivos de esta asignación incluyen:
+1.  Familiarizarse con las llamadas al sistema para la creación y acceso a las estructuras del sistema de archivos.
 
-    1.  Familiarizarse con las llamadas al sistema para la creación y acceso a las estructuras del sistema de archivos.
+2.  Desarrollar un mecanismo de comunicación entre un proceso y múltiples hijos concurrentes utilizando pipes no nominales, señales del sistema operativo, y la llamada al sistema `select`.
 
-    2.  Desarrollar un mecanismo de comunicación entre un proceso y múltiples hijos concurrentes utilizando pipes no nominales y la llamada al sistema `select`.
+3.  Utilizar la familia de llamadas al sistema `exec` para que un proceso ejecute a otro programa como parte de su ejecución.
 
-    3.  Fortalecer el conocimiento de herramientas de automatización del proceso de desarrollo de software como `make`.
-
-
+4.  Fortalecer el conocimiento de herramientas de automatización del proceso de desarrollo de software como `make`.
 
 ## *Build system*s
 
@@ -37,22 +39,20 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
     1.  Los `Makefile`s simples para compilar alguno de sus proyectos pueden ser considerados *build system*s: son programas que describen el proceso de construcción de los ejecutables de sus proyectos.
 
-    2.  El programa que interpreta sus `Makefile`s y ejecuta acciones descritas en ellos, [make], también puede considerarse un *build system*.
+    2.  El programa que interpreta sus `Makefile`s y ejecuta acciones descritas en ellos, [`make`][GNU Make], también puede considerarse un *build system*.
 
-    3.  Existen *build system*s que trabajan a un nivel más alto, como [GNU Automake] y [GNU Autoconf] que son dos de los componentes del [GNU build system], también conocido como *Autotools*.  Este sistema puede generar `Makefile`s automáticamente ajustados a las peculiaridades de cada tipo de sistema UNIX, lo que lo hace adecuado para proyectos de gran escala que deban funcionar en múltiples plataformas.
+    3.  Existen *build system*s que trabajan a un nivel más alto, como [GNU Automake] y [GNU Autoconf] que son dos de los componentes del [GNU build system], también conocido como *Autotools*.  Este sistema puede generar `Makefile`s automáticamente ajustados a las peculiaridades de cada tipo de sistema UNIX y cada proyecto, lo que lo hace adecuado para proyectos de gran escala que deban funcionar en múltiples plataformas.
 
-[make]: <https://www.gnu.org/software/make>
-(GNU Make: la implementación del proyecto GNU del build system básico tradicionalmente encontrado en UNIX.)
+    4.  Fuera del mundo de C es común encontrar *build system*s asociados a lenguajes y plataformas específicas, como [Apache Ant](https://ant.apache.org/) para [Java](https://java.com/), [Scons](http://scons.org/) para [Python](http://python.org/), [Rake](http://rake.rubyforge.org/) para [Ruby](http://www.ruby-lang.org/), [Cabal](http://haskell.org/cabal/) para [Haskell](http://haskell.org/), etc.  Casi todas estas herramientas pueden ser usadas independientemente del lenguaje o la plataforma para la cual esté escrito el proyecto al que son aplicadas, y ofrecen diversos grados de expresividad y automatización: algunas hasta proveen lenguajes de programación completos para describir el proceso que automatizan.
+
+[GNU Make]: <https://www.gnu.org/software/make>
+(La implementación del proyecto GNU del build system básico tradicionalmente encontrado en UNIX.)
 
 [GNU Automake]: <https://www.gnu.org/software/automake>
-(GNU Automake: un componente del GNU build system.)
 
 [GNU Autoconf]: <https://www.gnu.org/software/autoconf>
-(GNU Autoconf: un componente del GNU build system.)
 
 [GNU build system]: <https://www.gnu.org/software/automake/manual/html_node/GNU-Build-System>
-(Una breve descripción del GNU build system y su motivación.)
-
 
 
 ## Compilación separada por directorios
@@ -63,7 +63,7 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
         multidoc/src          # Código fuente del proyecto
         multidoc/src/c        # Uso de documentación en código C
         multidoc/src/c++      # Uso de documentación en código C++
-        multidoc/src/asm      # Uso de documentación en assembly
+        multidoc/src/asm      # Uso de documentación en código assembly
         multidoc/src/asm/x86  # Lenguaje de máquina x86
         multidoc/src/asm/mips # Lenguaje de máquina MIPS
         multidoc/src/java     # Uso de documentación en código Java
@@ -165,6 +165,7 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 *Esta sección es normativa.*
 
+
 ## Requerimientos
 
 1.  Usted debe desarrollar un programa llamado `rautomake` escrito en el lenguaje de programación C.
@@ -195,7 +196,7 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 7.  `rautomake` será ejecutado únicamente en directorios cuyos nombres estén compuestos únicamente de caracteres alfanuméricos de ASCII, o el caracter “FULL STOP”, también llamado “punto” (“.”); tampoco tendrán caracteres fuera de ese conjunto los nombres de cualquier archivo contenido en los directorios donde `rautomake` sea ejecutado, ni sus subdirectorios, ni los archivos contenidos en sus subdirectorios; tampoco será ninguno de esos nombres exactamente igual a “.c”.  No es necesario que `rautomake` verifique esto.
 
-8.  `rautomake` puede suponer que no existe ningún archivo dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre termine en “.d”.  Si tales archivos existen, `rautomake` puede eliminarlos o sobreescribirlos para cualquier fin.  `rautomake` no será ejecutado en un directorio donde existan tales archivos y `rautomake` no tenga permiso de lectura y escritura sobre esos archivos.  `rautomake` no será ejecutado en un directorio cuyo nombre termine en “.d”, ni que tenga algún subdirectorio cuyo nombre termine en “.d”.
+8.  `rautomake` podrá suponer que no existe ningún archivo dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre termine en “.d”.  Si tales archivos existen, `rautomake` podrá eliminarlos o sobreescribirlos para cualquier fin.  `rautomake` no será ejecutado en un directorio donde existan archivos con nombres de esa forma sobre los que no tenga permiso de lectura y escritura.  `rautomake` no será ejecutado en un directorio cuyo nombre termine en “.d”, ni que tenga algún subdirectorio cuyo nombre termine en “.d”.
 
 9.  Un proceso de `rautomake` no puede visitar, abrir ni manipular más de un directorio a lo largo de su ejecución, a menos que ese proceso sea un compilador de C.  Si un proceso de `rautomake` que no sea un compilador de C requiere visitar, abrir o manipular más de un directorio, deberá copiarse a sí mismo y una de sus copias podrá visitar, abrir o manipular un directorio distinto al visitado, abierto o manipulado por el proceso original.
 
@@ -203,9 +204,10 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 11. A menos que este documento haga una excepción explícita particular, `rautomake` **debe** manejar explícitamente absolutamente todos los efectos y resultados de llamadas al sistema o a bibliotecas que puedan afectar al flujo de ejecución de su implementación de `rautomake`.  En particular, si su implementación de `rautomake` deja de revisar una posible condición de error en el retorno de una llamada al sistema o a alguna biblioteca que utilice, incluyendo la biblioteca estándar de C, se esperará que usted pueda demostrar rigurosamente que el flujo de ejecución de su programa nunca depende de esa condición.
 
+
 ## Entrega
 
-1.  El código principal de `rautomake` debe estar escrito en el lenguaje de programación C en cualquiera de sus versiones, y debe poder compilarse con las herramientas GNU disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux, y, en particular, debe poder compilarse y ejecutarse en las computadoras del LDC.
+1.  El código principal de `rautomake` debe estar escrito en el lenguaje de programación C en cualquiera de sus versiones, debe poder compilarse con las herramientas GNU disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux, y, en particular, debe poder compilarse y ejecutarse en las computadoras del LDC.
 
 2.  La entrega consistirá de un archivo en formato `tar.gz` o `tar.bz2` que contenga todo el código que haya desarrollado y sea necesario para compilar su programa.  No debe incluir archivos compilados.  Su proyecto debe poder compilarse extrayendo los archivos del paquete de su entrega, entrando en el directorio generado por la extracción, y ejecutando el comando `make`; es decir que *debe* incluir al menos un `Makefile` para automatizar la compilación de su proyecto.
 
@@ -222,12 +224,12 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 *Esta sección es informativa.*
 
-1.  Este proyecto está diseñado para instruir en el uso del lenguaje C, herramientas de desarrollo de software como `make` y `gcc`, y la interfaz de programación de los sistemas operativos que implementan los estándares [POSIX], y particularmente todo lo relacionado con el acceso a archivos y directorios y la comunicación entre procesos.  El diseño del proyecto, y por lo tanto de la herramienta que usted debe implementar, está orientado a ese propósito educativo y no necesariamente obedece a los criterios de diseño adecuados para la creación de un *build system*.
+1.  Este proyecto está diseñado para instruir en el uso del lenguaje C, herramientas de desarrollo de software como `make` y `gcc`, y la interfaz de programación de los sistemas operativos que implementan los estándares POSIX[^POSIX], y particularmente todo lo relacionado con el acceso a archivos y directorios y la comunicación entre procesos.  El diseño del proyecto, y por lo tanto de la herramienta que usted debe implementar, está orientado a ese propósito educativo y no necesariamente obedece a los criterios de diseño adecuados para la creación de un *build system*.
 
-2.  En particular, aunque el uso recursivo de `make` que este proyecto propone es sin duda muy similar a las prácticas comunes de muchos proyectos de software de gran envergadura, esta técnica sufre de problemas importantes y hay buenas razones para *no* usarla.  Varios de estos problemas se exploran en [Miller, 1997] (disponible en [PDF](http://aegis.sourceforge.net/auug97.pdf)); ese artículo es un buen comienzo si es de su interés conocer la manera *correcta* de usar `make` con proyectos divididos en múltiples directorios.
+2.  En particular, aunque el uso recursivo de `make` que este proyecto propone es sin duda muy similar a las prácticas comunes de muchos proyectos de software de gran envergadura, esta técnica sufre de problemas importantes y hay buenas razones para *no* usarla.  Varios de estos problemas se exploran en Miller, 1997[^miller1997] (disponible en [PDF](http://aegis.sourceforge.net/auug97.pdf)); ese artículo es un buen comienzo si es de su interés conocer la manera *correcta* de usar `make` con proyectos divididos en múltiples directorios.
 
-[POSIX]: <http://pubs.opengroup.org/onlinepubs/9699919799>
-(Documentos de POSIX.1‐2008 (también llamado “IEEE Std 1003.1™‐2008”, o “The Open Group Technical Standard Base Specifications, Issue 7”))
+[^POSIX]:
+[Documentos de POSIX.1‐2008](http://pubs.opengroup.org/onlinepubs/9699919799) (también llamado “IEEE Std 1003.1™‐2008”, o “The Open Group Technical Standard Base Specifications, Issue 7”)
 
-[Miller, 1997]: <http://miller.emu.id.au/pmiller/books/rmch/>
-(Peter Miller — Recursive make considered harmful (1997))
+[^miller1997]:
+[Peter Miller — Recursive make considered harmful (1997)](http://miller.emu.id.au/pmiller/books/rmch/)
