@@ -202,7 +202,7 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 10. La comunicación entre varios procesos resultantes de una ejecución de `rautomake` solo podrá hacerse a través de *pipes* no nominales y/o señales del sistema operativo, a menos que uno de los procesos involucrados sea un compilador de C, en cuyo caso es aceptable la comunicación a través de archivos.
 
-11. A menos que este documento haga una excepción explícita particular, `rautomake` **debe** manejar explícitamente absolutamente todos los efectos y resultados de llamadas al sistema o a bibliotecas que puedan afectar al flujo de ejecución de su implementación de `rautomake`.  En particular, si su implementación de `rautomake` deja de revisar una posible condición de error en el retorno de una llamada al sistema o a alguna biblioteca que utilice, incluyendo la biblioteca estándar de C, se esperará que usted pueda demostrar rigurosamente que el flujo de ejecución de su programa nunca depende de esa condición.
+11. A menos que este documento haga una excepción explícita particular, `rautomake` **debe** manejar explícitamente absolutamente todos los efectos y resultados de llamadas al sistema o a bibliotecas que puedan afectar al flujo de ejecución de su implementación de `rautomake`.  En particular, si su implementación de `rautomake` deja de revisar una posible condición de error en el retorno de una llamada al sistema o a alguna biblioteca que utilice, incluyendo la biblioteca estándar de C, se esperará que usted pueda demostrar que el flujo de ejecución de su programa nunca depende de esa condición.
 
 
 ## Entrega
