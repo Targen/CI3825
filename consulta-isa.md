@@ -1,11 +1,3 @@
-Hola!  Tengo varios comentarios sobre su código.  Se los envío por acá, pero los escribí en formato Markdown así que algunas cosas podrían salir un poco extrañas en el e‐mail.  Envío adjunto el mismo documento procesado y convertido a PDF; también publicaré en mi página esta respuesta con el formato adecuado.
-
-
-
-- - -
-
-
-
 > Sabes que en el proyecto de S.O. creemos que terminamos las dos versiones.
 > Para la versión de procesos obviamente es mas fácil verificar el resultado
 > que para la parte de hilos (que parece estar haciéndolo bien), sin embargo
