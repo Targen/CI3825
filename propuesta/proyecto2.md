@@ -204,13 +204,11 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 ```C
 #include <stdio.h>     /* printf, puts, perror */
 #include <stdlib.h>    /* exit */
-#include <sys/types.h> /* wait */
 #include <sys/wait.h>  /* wait */
 #include <unistd.h>    /* fork, execlp */
 
 int main() {
         int status;
-        pid_t cpid;
 
         switch(fork()) {
                 case -1:
@@ -218,21 +216,20 @@ int main() {
                         exit(EXIT_FAILURE);
 
                 case  0:
-                        execlp("cc", "cc", "-MMD", __FILE__, NULL);
+                        execlp("cc", "cc", "-E", "-MM", __FILE__, NULL);
                         perror("execlp");
                         exit(EXIT_FAILURE);
 
                 default: break;
         }
 
-        if ((cpid = wait(&status)) == -1) {
+        if (wait(&status) == -1) {
                 perror("wait");
                 exit(EXIT_FAILURE);
         }
         if (WIFEXITED(status)) {
                 printf(
-                        "El hijo %d terminó con el estado de salida %d\n",
-                        cpid,
+                        "El hijo terminó con el estado de salida %d\n",
                         WEXITSTATUS(status)
                 );
         } else {
