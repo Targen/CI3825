@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+find . -type f \( -iname '*.o' -o -iname '*.a' \) -exec rm -f {} +
+rm -f multidoc

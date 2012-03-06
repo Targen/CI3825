@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+./clean
+find . -type f -iname Makefile -exec rm -f {} +

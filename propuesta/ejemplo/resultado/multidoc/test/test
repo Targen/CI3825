@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+echo "Running tests..."
+
+for i in {1..10}
+do
+        echo -e "\tRunning test $i"
+
+        if [[ $RANDOM > 16384 ]]
+        then
+                echo -e "\t\tTest $i successful!"
+        else
+                echo -e "\t\tTest $i failed!"
+        fi
+done

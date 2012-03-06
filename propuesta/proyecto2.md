@@ -2,11 +2,11 @@
 % CI3825 (Sistemas de operación I)
 % Enero–Marzo 2012
 
-- - -
+<!-- - - - -->
 
-**Este documento es sólo una propuesta y no especifica requerimientos para ninguna evaluación.  No debe suponerse que alguna evaluación vaya a ser basada en él a menos que sea publicado oficialmente por los profesores a cargo del curso; en ese caso, la versión normativa del documento será la que se publique, que no contendrá esta nota, y esta versión será considerada inválida y no deberá ser usada como referencia para ningún propósito.**
+<!-- **Este documento es sólo una propuesta y no especifica requerimientos para ninguna evaluación.  No debe suponerse que alguna evaluación vaya a ser basada en él a menos que sea publicado oficialmente por los profesores a cargo del curso; en ese caso, la versión normativa del documento será la que se publique, que no contendrá esta nota, y esta versión será considerada inválida y no deberá ser usada como referencia para ningún propósito.** -->
 
-Este documento es un borrador, y se espera que tenga deficiencias de diseño, del redacción, orthografícas y d*e* t**ipo**g^r^a~~f~~~ía~.
+<!-- Este documento es un borrador, y se espera que tenga deficiencias de diseño, del redacción, orthografícas y d*e* t**ipo**g^r^a~~f~~~ía~. -->
 
 
 
@@ -55,6 +55,9 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 [GNU build system]: <https://www.gnu.org/software/automake/manual/html_node/GNU-Build-System>
 
 
+@@.pdf@.tex@@\newpage
+
+
 ## Compilación separada por directorios
 
 <!-- 1.   -->En un proyecto de software de escala no trivial resulta conveniente dividir la fuente del proyecto en categorías y agrupar los archivos de cada una en subdirectorios del directorio del proyecto.  Por ejemplo, un sistema de documentación de código escrito en C con soporte para múltiples lenguajes podría tener una estructura de directorios en su código fuente como esta:
@@ -88,6 +91,8 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
         opcodes.o: opcodes.c opcodes.h
 ```
 
+@@.pdf@.tex@@\newpage
+
 <!-- 5.   -->El comando
 
         ar rT archivo.a elemento1 elemento2 ...
@@ -119,6 +124,8 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 <!-- 8.   -->Note que la regla *phony* “force” se utiliza como prerequisito para los archivos de colección de los subdirectorios; el efecto de esto es que **siempre** se harán las llamadas recursivas a `make` para los subdirectorios.  Esto es necesario porque el `Makefile` de un directorio no tiene información sobre si es necesario actualizar el código compilado en un subdirectorio (si su `.c` o alguna de sus dependencias cambió).  Sin embargo, el `Makefile` que está dentro de ese subdirectorio sí será capaz de determinar esto.  Por lo tanto, la llamada recursiva se hace incondicionalmente, y si había algo que actualizar dentro de un subdirectorio, la invocación recursiva de `make` hará el trabajo y actualizará el archivo de colección de ese subdirectorio.
 
 <!-- 9.   -->Los directorios `multidoc/src/c`, `multidoc/src/cc` y `multidoc/src/java` tendrían `Makefile`s muy similares a los de los directorios `multidoc/src/asm/x86` y `multidoc/src/asm/mips`: como no tienen subdirectorios, sólo especifican reglas con las dependencias de sus archivos de código fuente, y la regla que dice cómo se construye el archivo de colección de ese directorio.  Como el directorio `multidoc/src` sí tiene subdirectorios con código fuente, tendría un `Makefile` similar al de `multidoc/src/asm`:
+
+@@.pdf@.tex@@\newpage
 
 ```Makefile
         .PHONY: all force
@@ -169,6 +176,9 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 <!-- 12.  -->Note que no se incluyó `doc/doc.a` ni `test/test.a` porque en el caso particular de este ejemplo esos serían directorios que no se usan para almacenar código fuente (ni directamente, ni en algún subdirectorio descendiente de ellos directa o indirectamente).  Esto implica que no interesaría escribir `Makefile`s en estas ramas de la jerarquía de directorios, y claro, si no hay `Makefiles`, no habrá tampoco llamada recursiva de `make` en ellos.
 
 
+@@.pdf@.tex@@\newpage
+
+
 ## Generación de dependencias
 
 <!-- 1.   -->Las líneas de un `Makefile` que indican las dependencias de un archivo de código fuente compilable (un `.c`) son tediosas de generar y de mantener actualizadas.  Si se agrega `#include "foo.h"` al archivo `bar.h`, debería agregarse `foo.h` a todos los archivos que incluyan a `bar.h` como dependencia directa o indirecta; además, si `foo.h` incluye a otros archivos, habrá que agregarlos a todos, y a todos los que éstos incluyan, y así sucesivamente.  Este proceso recursivo de resolución de dependencias implica procesar los archivos `.c` y `.h` para encontrar sus dependencias; por ejemplo, si una inclusión está condicionada con `#if` y/o `#ifdef` que dependa de valores que sólo pueda conocer el compilador, entonces podríamos incluir más dependencias de las necesarias si nos limitamos a incluir dependencias de la manera ingenua: cada vez que veamos una línea que comience con `#include "`.
@@ -186,22 +196,22 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 <!-- 3.   -->Como este análisis es efectuado por el compilador de C (en particular por su preprocesador), las dependencias generadas serán precisamente las necesarias, tomando en cuenta la posibilidad de inclusiones condicionadas a variables del preprocesador.  Toda la complejidad de este análisis se puede delegar al compilador, y el `Makefile` puede simplemente contener el texto de las dependencias generado por el compilador.
 
 
-## Estados de salida
+<!-- ## Estados de salida -->
 
-<!-- 1.   -->Cuando un proceso termina su ejecución, su entrada en la tabla de procesos del sistema operativo se reduce significativamente, pero no se elimina por completo.  Los recursos que el proceso tuviera reservados son liberados, incluyendo su memoria con su código ejecutable y sus datos.  Se mantiene, sin embargo, un mínimo de información referente a la historia de la ejecución del proceso, incluyendo varios datos estadísticos (cuánto tiempo estuvo en ejecución, cuál fue su carga promedio, etc), su identificador de proceso, el identificador de proceso de su padre, etc.  Entre esos datos está el *estado de salida* del proceso.
+<!-- 1.  Cuando un proceso termina su ejecución, su entrada en la tabla de procesos del sistema operativo se reduce significativamente, pero no se elimina por completo.  Los recursos que el proceso tuviera reservados son liberados, incluyendo su memoria con su código ejecutable y sus datos.  Se mantiene, sin embargo, un mínimo de información referente a la historia de la ejecución del proceso, incluyendo varios datos estadísticos (cuánto tiempo estuvo en ejecución, cuál fue su carga promedio, etc), su identificador de proceso, el identificador de proceso de su padre, etc.  Entre esos datos está el *estado de salida* del proceso. -->
 
-<!-- 2.   -->El *estado de salida* de un proceso que ha terminado es un número entero de 8 bits que un proceso produce cuando retorna de su función `main` o cuando ejecuta la función `exit`.  Del entero retornado, o del entero que es pasado como parámetro a `exit`, se toman los ocho bits menos significativos para obtener el estado de salida del proceso; todo el resto del número se ignora completamente.  Cuando un proceso termina, su proceso padre puede obtener su *estado de salida* usando las funciones `wait`, `waitpid` o `waitid`.
+<!-- 2.  El *estado de salida* de un proceso que ha terminado es un número entero de 8 bits que un proceso produce cuando retorna de su función `main` o cuando ejecuta la función `exit`.  Del entero retornado, o del entero que es pasado como parámetro a `exit`, se toman los ocho bits menos significativos para obtener el estado de salida del proceso; todo el resto del número se ignora completamente.  Cuando un proceso termina, su proceso padre puede obtener su *estado de salida* usando las funciones `wait`, `waitpid` o `waitid`. -->
 
-<!-- 3.   -->Este mecanismo permite que un proceso delegue parte de su trabajo a un proceso hijo y obtenga un resultado simple luego de su terminación que indique alguna información sobre ese trabajo.  Aunque los datos que se pueden comunicar mediante este mecanismo son muy limitados (porque sólo se puede pasar un entero de 8 bits), es muy conveniente: no es necesario establecer `pipe`s ni manejar señales para “retornar” un valor simple al proceso padre.  Los programas del sistema típicamente usan sus estados de salida para indicar que su ejecución fue exitosa produciendo un estado de salida igual a cero, y si hubo un error, producen estados de salida distintos de cero cuyos valores particulares pueden indicar el tipo de error encontrado.
+<!-- 3.  Este mecanismo permite que un proceso delegue parte de su trabajo a un proceso hijo y obtenga un resultado simple luego de su terminación que indique alguna información sobre ese trabajo.  Aunque los datos que se pueden comunicar mediante este mecanismo son muy limitados (porque sólo se puede pasar un entero de 8 bits), es muy conveniente: no es necesario establecer `pipe`s ni manejar señales para “retornar” un valor simple al proceso padre.  Los programas del sistema típicamente usan sus estados de salida para indicar que su ejecución fue exitosa produciendo un estado de salida igual a cero, y si hubo un error, producen estados de salida distintos de cero cuyos valores particulares pueden indicar el tipo de error encontrado. -->
 
 
-## Ejecución de programas con `exec`
+<!-- ## Ejecución de programas con `exec` -->
 
-<!-- 1.   -->La familia de llamadas al sistema `exec` permite que un proceso sustituya su propio contenido por el de algún programa disponible en el sistema y comience a ejecutarlo.  `exec` es el mecanismo básico que usan los programas de un sistema UNIX para producir a otros programas: primero se duplican llamando a `fork`, y el proceso hijo procede inmediatamente a ejecutar una de las funciones de la familia `exec` para ejecutar a otro programa.
+<!-- 1.  La familia de llamadas al sistema `exec` permite que un proceso sustituya su propio contenido por el de algún programa disponible en el sistema y comience a ejecutarlo.  `exec` es el mecanismo básico que usan los programas de un sistema UNIX para producir a otros programas: primero se duplican llamando a `fork`, y el proceso hijo procede inmediatamente a ejecutar una de las funciones de la familia `exec` para ejecutar a otro programa. -->
 
-<!-- 2.   -->Este código demuestra un uso mínimo de `fork`, `wait` y `execlp` para ejecutar un programa instalado en el sistema (en particular, un compilador de C que calculará las dependencias del código fuente del mismo programa) y capturar su estado de salida.
+<!-- 2.  Este código demuestra un uso mínimo de `fork`, `wait` y `execlp` para ejecutar un programa instalado en el sistema (en particular, un compilador de C que calculará las dependencias del código fuente del mismo programa) y capturar su estado de salida. -->
 
-```C
+<!-- ```C
 #include <stdio.h>     /* printf, puts, perror */
 #include <stdlib.h>    /* exit */
 #include <sys/wait.h>  /* wait */
@@ -237,7 +247,7 @@ int main() {
         }
         exit(EXIT_SUCCESS);
 }
-```
+``` -->
 
 
 
@@ -290,9 +300,11 @@ int main() {
 
 <!-- 1.   -->Esta subsección define propiedades que `rautomake` puede suponer que cumple el ambiente donde será ejecutado, y no es necesario que sean verificadas explícitamente.
 
-<!-- 2.   -->`rautomake` sólo será ejecutado en directorios cuyos nombres estén compuestos únicamente de caracteres alfanuméricos de ASCII, o el caracter <!--“FULL STOP”, también llamado “punto” (-->“.”<!--)-->; tampoco tendrán caracteres fuera de ese conjunto los nombres de cualquier archivo contenido en los directorios donde `rautomake` sea ejecutado, ni sus subdirectorios, ni los archivos contenidos en sus subdirectorios; tampoco será ninguno de esos nombres exactamente igual a “.c”.
+<!-- 2.  -->`rautomake` podrá suponer que no existe ningún archivo o subdirectorio dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre no sea una secuencia de caracteres alfanuméricos de ASCII, o el caracter <!--“FULL STOP”, también llamado “punto” (-->“.”<!--)-->; podrá suponer lo mismo, además, del nombre del directorio donde es ejecutado.
 
 <!-- 3.  -->`rautomake` podrá suponer que no existe ningún archivo dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre termine en “.d”.  Si tales archivos existen, `rautomake` podrá eliminarlos o sobreescribirlos para cualquier fin.  `rautomake` no será ejecutado en un directorio donde existan archivos con nombres de esa forma sobre los que no tenga permiso de lectura y escritura.  `rautomake` no será ejecutado en un directorio que tenga algún subdirectorio directo o indirecto cuyo nombre termine en “.d”.
+
+<!-- 4.  -->`rautomake` podrá suponer que no existe ninguna entrada del directorio donde es ejecutado, ni de ninguno de sus subdirectorios, que no sea un archivo regular o un directorio.
 
 
 ## Entrega
@@ -303,8 +315,9 @@ int main() {
 
 <!-- 3.   --><!-- Aunque en general es preferible que su código sea compatible con los documentos de estandarización más recientes publicados para cada tecnología que utilice, es aceptable que requiera y use extensiones propias de la implementación de las herramientas de la plataforma GNU/Linux tanto del lenguaje de programación C como de la interfaz con el sistema operativo.  Es aceptable que requiera alguna versión de las herramientas del sistema diferente de las que están instaladas y disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux, y en particular de lo que esté instalado y disponible en las computadoras del LDC, pero deberá justificar estos requerimientos adicionales. -->
 
-<!-- 4.   -->TODO: detalles de entrega en el Moodle.
+<!-- 4.   -->Deberá enviar su entrega a la plataforma asociada al curso, en la sección que será creada para este fin, antes de las 13:00 HLV[^HLV] del lunes 2012‒03‒26 (semana 12 del trimestre en curso).
 
+[^HLV]: Hora legal de Venezuela (UTC-04:30).
 
 
 @@.txt@.html@@- - -
