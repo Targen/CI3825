@@ -264,7 +264,7 @@ A menos que este documento haga una excepción explícita particular, `rautomake
 
 Esta subsección define propiedades que `rautomake` puede suponer que cumple el ambiente donde será ejecutado, y no es necesario que sean verificadas explícitamente.
 
-`rautomake` podrá suponer que no existe ningún archivo o subdirectorio dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre no sea una secuencia de caracteres alfanuméricos de ASCII, o el caracter <!--“FULL STOP”, también llamado “punto” (-->“.”<!--)-->; podrá suponer lo mismo, además, del nombre del directorio donde es ejecutado.
+`rautomake` podrá suponer que no existe ningún archivo o subdirectorio dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre no sea una secuencia de caracteres alfanuméricos de ASCII, o el caracter “.”; podrá suponer lo mismo, además, del nombre del directorio donde es ejecutado.
 
 `rautomake` podrá suponer que no existe ningún archivo dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre termine en “.d”.  Si tales archivos existen, `rautomake` podrá eliminarlos o sobreescribirlos para cualquier fin.  `rautomake` no será ejecutado en un directorio donde existan archivos con nombres de esa forma sobre los que no tenga permiso de lectura y escritura.  `rautomake` no será ejecutado en un directorio que tenga algún subdirectorio directo o indirecto cuyo nombre termine en “.d”.
 
