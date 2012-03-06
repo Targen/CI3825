@@ -1,0 +1,299 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="CI3825 (Sistemas de operación I)" />
+  <title>Proyecto 2: rautomake: El generador de Makefiles</title>
+  <style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; }
+code > span.dt { color: #902000; }
+code > span.dv { color: #40a070; }
+code > span.bn { color: #40a070; }
+code > span.fl { color: #40a070; }
+code > span.ch { color: #4070a0; }
+code > span.st { color: #4070a0; }
+code > span.co { color: #60a0b0; font-style: italic; }
+code > span.ot { color: #007020; }
+code > span.al { color: #ff0000; font-weight: bold; }
+code > span.fu { color: #06287e; }
+code > span.er { color: #ff0000; font-weight: bold; }
+  </style>
+</head>
+<body>
+<div id="header">
+<h1 class="title">Proyecto 2: <code>rautomake</code>: El generador de <code>Makefile</code>s</h1>
+<h2 class="author">CI3825 (Sistemas de operación I)</h2>
+<h3 class="date">Enero–Marzo 2012</h3>
+</div>
+<div id="TOC">
+<ul>
+<li><a href="#introducción"><span class="toc-section-number">1</span> Introducción</a><ul>
+<li><a href="#objetivos"><span class="toc-section-number">1.1</span> Objetivos</a></li>
+<li><a href="#build-systems"><span class="toc-section-number">1.2</span> <em>Build system</em>s</a></li>
+<li><a href="#compilación-separada-por-directorios"><span class="toc-section-number">1.3</span> Compilación separada por directorios</a></li>
+<li><a href="#generación-de-dependencias"><span class="toc-section-number">1.4</span> Generación de dependencias</a></li>
+<li><a href="#estados-de-salida"><span class="toc-section-number">1.5</span> Estados de salida</a></li>
+<li><a href="#ejecución-de-programas-con-exec"><span class="toc-section-number">1.6</span> Ejecución de programas con <code>exec</code></a></li>
+</ul></li>
+<li><a href="#enunciado"><span class="toc-section-number">2</span> Enunciado</a><ul>
+<li><a href="#requerimientos"><span class="toc-section-number">2.1</span> Requerimientos</a></li>
+<li><a href="#condiciones-de-ejecución"><span class="toc-section-number">2.2</span> Condiciones de ejecución</a></li>
+<li><a href="#entrega"><span class="toc-section-number">2.3</span> Entrega</a></li>
+</ul></li>
+<li><a href="#información-adicional"><span class="toc-section-number">3</span> Información adicional</a></li>
+</ul>
+</div>
+<hr />
+<p><strong>Este documento es solo una propuesta y no especifica requerimientos para ninguna evaluación. No debe suponerse que alguna evaluación vaya a ser basada en él a menos que sea publicado oficialmente por los profesores a cargo del curso; en ese caso, la versión normativa del documento será la que se publique, que no contendrá esta nota, y esta versión será considerada inválida y no deberá ser usada como referencia para ningún propósito.</strong></p>
+<p>Este documento es un borrador, y se espera que tenga deficiencias de diseño, del redacción, orthografícas y d<em>e</em> t<strong>ipo</strong>g<sup>r</sup>a<del>f</del><sub>ía</sub>.</p>
+<hr />
+<div class="section level1" id="introducción">
+<h1><a href="#TOC"><span class="header-section-number">1</span> Introducción</a></h1>
+<p><em>Esta sección es informativa.</em></p>
+<div class="section level2" id="objetivos">
+<h2><a href="#TOC"><span class="header-section-number">1.1</span> Objetivos</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>Familiarizarse con las llamadas al sistema para la creación y acceso a las estructuras del sistema de archivos.</p></li>
+<li><p>Desarrollar un mecanismo de comunicación entre un proceso y múltiples hijos concurrentes utilizando los estados de salida de los hijos.</p></li>
+<li><p>Utilizar la familia de llamadas al sistema <code>exec</code> para que un proceso ejecute a otro programa como parte de su ejecución.</p></li>
+<li><p>Fortalecer el conocimiento de herramientas de automatización del proceso de desarrollo de software como <code>make</code>.</p></li>
+</ol>
+</div>
+<div class="section level2" id="build-systems">
+<h2><a href="#TOC"><span class="header-section-number">1.2</span> <em>Build system</em>s</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>El proceso de desarrollo de software con cualquier conjunto de herramientas implica realizar ciertas tareas repetitivas para transformar los datos crudos y el código fuente desarrollados por los programadores en un producto terminado que se pueda distribuir y utilizar. Si se utilizan lenguajes de programación compilados, este proceso incluye la ejecución de compiladores para transformar código fuente en ejecutables. Esta tarea puede resultar tediosa en el contexto de un proyecto de complejidad considerable, y como el tiempo de un desarrollador de software es mejor aprovechado cuando se utiliza para desarrollar software, sería deseable eliminar esa carga de trabajo con procesos automatizados.</p></li>
+<li><p>Un <strong><em>build system</em></strong> es un sistema de automatización para las tareas de producción de paquetes de software a partir de código y datos fuente. Esta definición general incluye sistemas de alcances diversos:</p>
+<ol style="list-style-type: decimal">
+<li><p>Los <code>Makefile</code>s simples para compilar alguno de sus proyectos pueden ser considerados <em>build system</em>s: son programas que describen el proceso de construcción de los ejecutables de sus proyectos.</p></li>
+<li><p>El programa que interpreta sus <code>Makefile</code>s y ejecuta acciones descritas en ellos, <a href="https://www.gnu.org/software/make" title="La implementación del proyecto GNU del build system básico tradicionalmente encontrado en UNIX."><code>make</code></a>, también puede considerarse un <em>build system</em>.</p></li>
+<li><p>Existen <em>build system</em>s que trabajan a un nivel más alto, como <a href="https://www.gnu.org/software/automake">GNU Automake</a> y <a href="https://www.gnu.org/software/autoconf">GNU Autoconf</a> que son dos de los componentes del <a href="https://www.gnu.org/software/automake/manual/html_node/GNU-Build-System">GNU build system</a>, también conocido como <em>Autotools</em>. Este sistema puede generar <code>Makefile</code>s automáticamente ajustados a las peculiaridades de cada tipo de sistema UNIX y cada proyecto, lo que lo hace adecuado para proyectos de gran escala que deban funcionar en múltiples plataformas.</p></li>
+<li><p>Fuera del mundo de C es común encontrar <em>build system</em>s asociados a lenguajes y plataformas específicas, como <a href="https://ant.apache.org/">Apache Ant</a> para <a href="https://java.com/">Java</a>, <a href="http://scons.org/">Scons</a> para <a href="http://python.org/">Python</a>, <a href="http://rake.rubyforge.org/">Rake</a> para <a href="http://www.ruby-lang.org/">Ruby</a>, <a href="http://haskell.org/cabal/">Cabal</a> para <a href="http://haskell.org/">Haskell</a>, etc. Casi todas estas herramientas pueden ser usadas independientemente del lenguaje o la plataforma para la cual esté escrito el proyecto al que son aplicadas, y ofrecen diversos grados de expresividad y automatización: algunas hasta proveen lenguajes de programación completos para describir el proceso que automatizan.</p></li>
+</ol></li>
+</ol>
+</div>
+<div class="section level2" id="compilación-separada-por-directorios">
+<h2><a href="#TOC"><span class="header-section-number">1.3</span> Compilación separada por directorios</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>En un proyecto de software de escala no trivial resulta conveniente dividir la fuente del proyecto en categorías y agrupar los archivos de cada una en subdirectorios del directorio del proyecto. Por ejemplo, un sistema de documentación de código escrito en C con soporte para múltiples lenguajes podría tener una estructura de directorios en su código fuente como esta:</p>
+<pre><code>multidoc/             # Directorio principal del proyecto
+multidoc/src          # Código fuente del proyecto
+multidoc/src/c        # Uso de documentación en código C
+multidoc/src/cc       # Uso de documentación en código C++
+multidoc/src/asm      # Uso de documentación en código assembly
+multidoc/src/asm/x86  # Lenguaje de máquina x86
+multidoc/src/asm/mips # Lenguaje de máquina MIPS
+multidoc/src/java     # Uso de documentación en código Java
+multidoc/lib          # Código de una biblioteca incluida
+multidoc/doc          # Documentación del proyecto
+multidoc/test         # Pruebas de correctitud del proyecto</code></pre></li>
+<li><p>El directorio <code>src</code> y cada uno de sus subdirectorios podrían contener varios archivos de código fuente que se compilen de la misma manera a archivos de objeto y se combinen finalmente en un ejecutable de todo el proyecto. En ese caso, sería conveniente tener en cada subdirectorio un <code>Makefile</code> que describa cómo compilar los archivos de código fuente de ese subdirectorio, y si contiene a otro subdirectorio, que llame a los <code>Makefiles</code> contenidos en ellos. Por ejemplo, el <code>Makefile</code> del directorio <code>multidoc/src</code> llamará al <code>Makefile</code> del directorio <code>multidoc/src/asm</code>, que a su vez llamará al <code>Makefile</code> del directorio <code>x86</code>. Claro que cada <code>Makefile</code> no debe llamar a solo <em>uno</em> de los <code>Makefiles</code> de sus subdirectorios, sino a <em>todos</em>.</p></li>
+<li><p>A partir de los archivos de código fuente (los <code>.c</code>) de cada subdirectorio serán generados sus correspondientes archivos de objeto (los <code>.o</code>). El objetivo del proceso de compilación es reunir todo el código generado (todos los <code>.o</code>) para crear finalmente un archivo ejecutable en la raíz de la jerarquía de directorios del proyecto (que es el producto final del proyecto ficticio <code>multidoc</code>). Para facilitar este proceso, en cada subdirectorio debería crearse un archivo <code>.a</code> que contenga la <em>colección de todos los <code>.o</code></em> de ese subdirectorio (y de los subdirectorios que contenga). Luego, el <em>directorio padre</em> de ese subdirectorio podría hacer lo mismo con sus archivos de código fuente, y en su colección incluir a sus archivos de objeto y a las <em>colecciones</em> (los <code>.a</code>) de todos sus directorios hijos.</p></li>
+<li><p>Por ejemplo, suponga que en <code>multidoc/src/asm/x86</code> existen dos archivos de código fuente a compilar: <code>parse.c</code> y <code>opcodes.c</code>. Suponga además que <code>opcodes.c</code> incluye a un archivo de encabezado <code>opcodes.h</code>, y que <code>parse.c</code> incluye a <code>parse.h</code>, y <code>parse.h</code> a su vez también incluye a <code>opcodes.h</code>. El directorio <code>multidoc/src/asm/x86</code> debería contener un <code>Makefile</code> que diga, por ejemplo,</p></li>
+</ol>
+<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all
+        <span class="dv">all:</span> x86.a
+
+        x86.a<span class="ch">:</span> parse.o opcodes.o
+        	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
+
+        parse.o<span class="ch">:</span> parse.c parse.h opcodes.h
+        opcodes.o<span class="ch">:</span> opcodes.c opcodes.h</code></pre>
+<ol start="5" style="list-style-type: decimal">
+<li><p>El comando</p>
+<pre><code>ar rT archivo.a elemento1 elemento2 ...</code></pre>
+<p>crea un archivo de colección llamado <code>archivo.a</code> que contendrá referencias al código compilado de <code>elemento1</code>, <code>elemento2</code>, etc. Si alguno de esos elementos es a su vez un archivo de colección, se almacenarán referencias a sus elementos por separado en vez de al archivo de colección completo como uno de los miembros. La secuencia <code>$@</code> en la <em>receta</em> de una regla de un <code>Makefile</code> se sustituye por el nombre del archivo que causó que se corriera esa regla; en el caso de la regla cuya receta ejecuta al comando <code>ar</code>, <code>$@</code> se sustituye por <code>x86.a</code>. <code>$?</code> se sustituye por aquellas dependencias de la regla que deban actualizarse: por ejemplo, si acabamos de compilar de nuevo a <code>opcodes.c</code> y obtuvimos una nueva versión de <code>opcodes.o</code>, se actualizará la referencia a <code>opcodes.o</code> en el archivo de colección <code>x86.a</code>, pero si no se actualizó <code>parse.o</code>, no se sustituirá su referencia en la colección (porque no es necesario hacerlo).</p></li>
+<li><p>Suponga ahora que se hizo lo mismo en el directorio <code>multidoc/src/asm/mips</code>. En el directorio <code>multidoc/src/asm</code> sucede lo mismo, excepto que al archivo de colección habrá que insertarle las referencias a los elementos de las colecciones de sus subdirectorios:</p></li>
+</ol>
+<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all force
+        <span class="dv">all:</span> asm.a
+
+        asm.a<span class="ch">:</span> x86/x86.a mips/mips.a asm.o marmota.o ...
+        	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
+
+        x86/x86.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C x86
+
+        mips/mips.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C mips
+
+        asm.o<span class="ch">:</span> asm.c asm.h marmota.h archs.h
+        marmota.o<span class="ch">:</span> marmota.c marmota.h archs.h
+        ...</code></pre>
+<ol start="7" style="list-style-type: decimal">
+<li><p>El nuevo archivo de colección <code>x86/x86.a</code> contendrá referencias a todo el código compilado correspondiente a ese directorio y a todos sus subdirectorios (recursivamente).</p></li>
+<li><p>Note que la regla <em>phony</em> “force” se utiliza como prerequisito para los archivos de colección de los subdirectorios; el efecto de esto es que <strong>siempre</strong> se harán las llamadas recursivas a <code>make</code> para los subdirectorios. Esto es necesario porque el <code>Makefile</code> de un directorio no tiene información sobre si es necesario actualizar el código compilado en un subdirectorio (si su <code>.c</code> o alguna de sus dependencias cambió). Sin embargo, el <code>Makefile</code> que está dentro de ese subdirectorio sí será capaz de determinar esto. Por lo tanto, la llamada recursiva se hace incondicionalmente, y si había algo que actualizar dentro de un subdirectorio, la invocación recursiva de <code>make</code> hará el trabajo y actualizará el archivo de colección de ese subdirectorio.</p></li>
+<li><p>Los directorios <code>multidoc/src/c</code>, <code>multidoc/src/cc</code> y <code>multidoc/src/java</code> tendrían <code>Makefile</code>s muy similares a los de los directorios <code>multidoc/src/asm/x86</code> y <code>multidoc/src/asm/mips</code>: como no tienen subdirectorios, solo especifican reglas con las dependencias de sus archivos de código fuente, y la regla que dice cómo se construye el archivo de colección de ese directorio. Como el directorio <code>multidoc/src</code> sí tiene subdirectorios con código fuente, tendría un <code>Makefile</code> similar al de <code>multidoc/src/asm</code>:</p></li>
+</ol>
+<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all force
+        <span class="dv">all:</span> src.a
+
+        src.a<span class="ch">:</span> c/c.a cc/cc.a asm/asm.a java/java.a multidoc.o xml.o ...
+        	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
+
+        c/c.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C c
+
+        cc/cc.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C cc
+
+        asm/asm.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C asm
+
+        java/java.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C java
+
+        multidoc.o<span class="ch">:</span> multidoc.c multidoc.h xml.h asm/archs.h
+        xml.o<span class="ch">:</span> xml.c xml.h asm/archs.h
+        ...</code></pre>
+<ol start="10" style="list-style-type: decimal">
+<li>Finalmente, en el directorio principal del proyecto se compilarán todos los archivos compilables que estén directamente en él, y se enlazarán todos sus archivos de objeto y todos los archivos de colección de los subdirectorios del proyecto. El resultado de esto debe ser un ejecutable. En el directorio principal del proyecto podría haber, por ejemplo, este <code>Makefile</code>:</li>
+</ol>
+<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all force
+        <span class="dv">all:</span> multidoc
+
+        <span class="dv">multidoc:</span> src/src.a lib/lib.a main.o args.o ...
+        	<span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CPPFLAGS</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CCFLAGS</span><span class="ch">)</span> -o <span class="ch">$</span>@ <span class="ch">$</span>^
+
+        src/src.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C src
+
+        lib/lib.a<span class="ch">:</span> force
+        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C lib
+
+        main.o<span class="ch">:</span> main.c main.h args.h
+        args.o<span class="ch">:</span> args.c args.h
+        ...</code></pre>
+<ol start="11" style="list-style-type: decimal">
+<li><p>La secuencia <code>$^</code> en una receta de una regla se sustituye con los nombres de todos los prerequisitos de la regla separados por espacio (sin repeticiones). La receta mostrada en el ejemplo de <code>Makefile</code> anterior genera el ejecutable final del proyecto que contiene todo el código compilado de todos los archivos fuente del proyecto.</p></li>
+<li><p>Note que no se incluyó <code>doc/doc.a</code> ni <code>test/test.a</code> porque en el caso particular de este ejemplo esos serían directorios que no se usan para almacenar código fuente (ni directamente, ni en algún subdirectorio descendiente de ellos directa o indirectamente). Esto implica que no interesaría escribir <code>Makefile</code>s en estas ramas de la jerarquía de directorios, y claro, si no hay <code>Makefiles</code>, no habrá tampoco llamada recursiva de <code>make</code> en ellos.</p></li>
+</ol>
+</div>
+<div class="section level2" id="generación-de-dependencias">
+<h2><a href="#TOC"><span class="header-section-number">1.4</span> Generación de dependencias</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>Las líneas de un <code>Makefile</code> que indican las dependencias de un archivo de código fuente compilable (un <code>.c</code>) son tediosas de generar y de mantener actualizadas. Si se agrega <code>#include &quot;foo.h&quot;</code> al archivo <code>bar.h</code>, debería agregarse <code>foo.h</code> a todos los archivos que incluyan a <code>bar.h</code> como dependencia directa o indirecta; además, si <code>foo.h</code> incluye a otros archivos, habrá que agregarlos a todos, y a todos los que éstos incluyan, y así sucesivamente. Este proceso recursivo de resolución de dependencias implica procesar los archivos <code>.c</code> y <code>.h</code> para encontrar sus dependencias; por ejemplo, si una inclusión está condicionada con <code>#if</code> y/o <code>#ifdef</code> que dependa de valores que solo pueda conocer el compilador, entonces podríamos incluir más dependencias de las necesarias si nos limitamos a incluir dependencias de la manera ingenua: cada vez que veamos una línea que comience con <code>#include &quot;</code>.</p></li>
+<li><p>Afortunadamente, los compiladores de C casi universalmente soportan opciones especiales que hacen que en vez de compilar un archivo de código fuente compilable, generen el código correspondiente a la regla que debería contener un <code>Makefile</code> para compilarlo y mantener su archivo de objeto actualizado correctamente. Por ejemplo, en el caso del archivo de ejemplo <code>parse.c</code> anteriormente mencionado, podría ejecutarse en su directorio el comando</p>
+<pre><code>gcc -E -MMD parse.c</code></pre>
+<p>y se generará otro archivo llamado <code>parse.d</code> cuyo contenido será</p>
+<pre><code>parse.o: parse.c parse.h opcodes.h</code></pre>
+<p>que es precisamente lo que debe contener el <code>Makefile</code> que esté en el directorio de <code>parse.c</code>. Hay varias variaciones de estas opciones; todas comienzan con <code>-M</code>, pero algunas generan un archivo con un nombre fijo, otras generan la salida en un archivo cuyo nombre es parte de la opción, otras generan el texto de la regla en la salida estándar del compilador, etc. El manual de <code>gcc</code> describe en detalle todas las opciones que provee para cálculo de dependencias para <code>Makefile</code>s.</p></li>
+<li><p>Como este análisis es efectuado por el compilador de C (en particular por su preprocesador), las dependencias generadas serán precisamente las necesarias, tomando en cuenta la posibilidad de inclusiones condicionadas a variables del preprocesador. Toda la complejidad de este análisis se puede delegar al compilador, y el <code>Makefile</code> puede simplemente contener el texto de las dependencias generado por el compilador.</p></li>
+</ol>
+</div>
+<div class="section level2" id="estados-de-salida">
+<h2><a href="#TOC"><span class="header-section-number">1.5</span> Estados de salida</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>Cuando un proceso termina su ejecución, su entrada en la tabla de procesos del sistema operativo se reduce significativamente, pero no se elimina por completo. Los recursos que el proceso tuviera reservados son liberados, incluyendo su memoria con su código ejecutable y sus datos. Se mantiene, sin embargo, un mínimo de información referente a la historia de la ejecución del proceso, incluyendo varios datos estadísticos (cuánto tiempo estuvo en ejecución, cuál fue su carga promedio, etc), su identificador de proceso, el identificador de proceso de su padre, etc. Entre esos datos está el <em>estado de salida</em> del proceso.</p></li>
+<li><p>El <em>estado de salida</em> de un proceso que ha terminado es un número entero de 8 bits que un proceso produce cuando retorna de su función <code>main</code> o cuando ejecuta la función <code>exit</code>. Del entero retornado, o del entero que es pasado como parámetro a <code>exit</code>, se toman los ocho bits menos significativos para obtener el estado de salida del proceso; todo el resto del número se ignora completamente. Cuando un proceso termina, su proceso padre puede obtener su <em>estado de salida</em> usando las funciones <code>wait</code>, <code>waitpid</code> o <code>waitid</code>.</p></li>
+<li><p>Este mecanismo permite que un proceso delegue parte de su trabajo a un proceso hijo y obtenga un resultado simple luego de su terminación que indique alguna información sobre ese trabajo. Aunque los datos que se pueden comunicar mediante este mecanismo son muy limitados (porque solo se puede pasar un entero de 8 bits), es muy conveniente: no es necesario establecer <code>pipe</code>s ni manejar señales para “retornar” un valor simple al proceso padre. Los programas del sistema típicamente usan sus estados de salida para indicar que su ejecución fue exitosa produciendo un estado de salida igual a cero, y si hubo un error, producen estados de salida distintos de cero cuyos valores particulares pueden indicar el tipo de error encontrado.</p></li>
+</ol>
+</div>
+<div class="section level2" id="ejecución-de-programas-con-exec">
+<h2><a href="#TOC"><span class="header-section-number">1.6</span> Ejecución de programas con <code>exec</code></a></h2>
+<ol style="list-style-type: decimal">
+<li><p>La familia de llamadas al sistema <code>exec</code> permite que un proceso sustituya su propio contenido por el de algún programa disponible en el sistema y comience a ejecutarlo. <code>exec</code> es el mecanismo básico que usan los programas de un sistema UNIX para producir a otros programas: primero se duplican llamando a <code>fork</code>, y el proceso hijo procede inmediatamente a ejecutar una de las funciones de la familia <code>exec</code> para ejecutar a otro programa.</p></li>
+<li><p>Este código demuestra un uso mínimo de <code>fork</code>, <code>wait</code> y <code>execlp</code> para ejecutar un programa instalado en el sistema (en particular, un compilador de C que calculará las dependencias del código fuente del mismo programa) y capturar su estado de salida.</p></li>
+</ol>
+<pre class="sourceCode C"><code class="sourceCode c"><span class="ot">#include &lt;stdio.h&gt;     </span><span class="co">/* printf, puts, perror */</span>
+<span class="ot">#include &lt;stdlib.h&gt;    </span><span class="co">/* exit */</span>
+<span class="ot">#include &lt;sys/wait.h&gt;  </span><span class="co">/* wait */</span>
+<span class="ot">#include &lt;unistd.h&gt;    </span><span class="co">/* fork, execlp */</span>
+
+<span class="ot">#define do { PERROR_EXIT(s) perror(s); exit(EXIT_FAILURE); } while (0)</span>
+
+<span class="dt">int</span> main() {
+        <span class="dt">int</span> status;
+
+        <span class="kw">switch</span>(fork()) {
+                <span class="kw">case</span> -<span class="dv">1</span>:
+                        PERROR_EXIT(<span class="st">&quot;fork&quot;</span>);
+
+                <span class="kw">case</span>  <span class="dv">0</span>:
+                        execlp(<span class="st">&quot;cc&quot;</span>, <span class="st">&quot;cc&quot;</span>, <span class="st">&quot;-E&quot;</span>, <span class="st">&quot;-MM&quot;</span>, __FILE__, NULL);
+                        PERROR_EXIT(<span class="st">&quot;execlp&quot;</span>);
+
+                <span class="kw">default</span>:
+                        <span class="kw">break</span>;
+        }
+
+        <span class="kw">if</span> (wait(&amp;status) == -<span class="dv">1</span>) PERROR_EXIT(<span class="st">&quot;wait&quot;</span>);
+
+        <span class="kw">if</span> (!WIFEXITED(status)) puts(<span class="st">&quot;El hijo terminó de forma irregular.&quot;</span>);
+        <span class="kw">else</span> {
+                printf(
+                        <span class="st">&quot;El hijo terminó con el estado de salida %d</span><span class="ch">\n</span><span class="st">&quot;</span>,
+                        WEXITSTATUS(status)
+                );
+        }
+        exit(EXIT_SUCCESS);
+}</code></pre>
+<hr />
+</div>
+</div>
+<div class="section level1" id="enunciado">
+<h1><a href="#TOC"><span class="header-section-number">2</span> Enunciado</a></h1>
+<p><em>Esta sección es normativa.</em></p>
+<div class="section level2" id="requerimientos">
+<h2><a href="#TOC"><span class="header-section-number">2.1</span> Requerimientos</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>Usted debe desarrollar un programa llamado <code>rautomake</code> escrito en el lenguaje de programación C.</p></li>
+<li><p><code>rautomake</code> será ejecutado dentro de un cierto directorio. Por ejemplo, suponga que el ejecutable de <code>rautomake</code> (que será el resultado de compilar su proyecto) reside en</p>
+<pre><code>/home/marmota/USB/CI3825/2012EM/P2/src/rautomake</code></pre>
+<p>y usted ejecuta el comando <code>../src/rautomake</code> en un intérprete de línea de comando cuyo directorio actual es</p>
+<pre><code>/home/marmota/USB/CI3825/2012EM/P2/multidoc</code></pre>
+<p>entonces <em>ese último directorio</em> será el directorio donde se ejecuta <code>rautomake</code>.</p></li>
+<li><p>Es necesario que <code>rautomake</code> cree un <code>Makefile</code> en un subdirectorio del directorio donde se ejecutó, o en ese mismo directorio, si <code>rautomake</code> tuviera permiso de lectura, escritura y acceso a ese directorio y a todos sus padres hasta el directorio donde fue ejecutado <code>rautomake</code>, inclusive, y si hubiera sido necesario que <code>rautomake</code> creara un <code>Makefile</code> en algún subdirectorio del directorio en cuestión o en él existen archivos para los que <code>rautomake</code> tenga permiso de lectura y cuyos nombres terminen en <code>.c</code>.</p></li>
+<li><p>Cada <code>Makefile</code> que <code>rautomake</code> deba crear deberá contener una regla para cada archivo en el directorio de ese <code>Makefile</code> cuyo nombre termine en <code>.c</code>. El contenido de la regla será el mismo que algún compilador de C generaría al pedirle que genere la regla correspondiente a ese archivo para un <code>Makefile</code>; debe tener como prerequisitos al menos a todos los archivos que al compilarlo serían incluidos directa o indirectamente por el archivo en cuestión que estén dentro del directorio en el que fue ejecutado <code>rautomake</code>, y no debe tener como prerequisito a ningún archivo que no pueda ser incluido ni directa ni indirectamente por el archivo en cuestión.</p></li>
+<li><p>Cada <code>Makefile</code> que <code>rautomake</code> deba crear en un directorio distinto a donde fue ejecutado deberá contener las reglas necesarias para crear un archivo de colección con el programa <code>ar</code> que contenga referencias a todo el código de objeto generado al compilar cada uno de los archivos de ese directorio cuyo nombre termine en “.c”, junto con referencias a todo el código de objeto referido por archivos de colección de sus subdirectorios en los que <code>rautomake</code> deba crear <code>Makefile</code>s.</p></li>
+<li><p>Si <code>rautomake</code> debió crear algún <code>Makefile</code> en cualquier directorio, entonces <code>rautomake</code> deberá crear un <code>Makefile</code> en el directorio donde fue ejecutado. Ese <code>Makefile</code> deberá contener una regla que cree un archivo ejecutable cuyo nombre sea igual al nombre del directorio donde <code>rautomake</code> fue ejecutado; ese archivo ejecutable será el resultado de enlazar todos los archivos de objeto correspondientes a archivos en el directorio en cuestión cuyos nombres terminen en “.c”, junto con el código referido por los archivos de colección correspondientes a los subdirectorios del directorio en cuestión en los que <code>rautomake</code> debiera generar un <code>Makefile</code>. Los <code>Makefile</code>s que <code>rautomake</code> debe crear deben permitir que se genere el ejecutable mencionado en este párrafo si se ejecuta la orden <code>make</code> en el mismo directorio donde <code>rautomake</code> fue llamado, suponiendo que todos los archivos de código fuente mencionados puedan compilarse a archivos de objeto, y que ese ejecutable se pueda generar enlazando a todos los archivos de objeto resultantes de esas compilaciones.</p></li>
+<li><p>Un proceso de <code>rautomake</code> no puede visitar ni abrir más de un directorio a lo largo de su ejecución, a menos que ese proceso sea un compilador de C. Si un proceso de <code>rautomake</code> que no sea un compilador de C requiere visitar o abrir más de un directorio, deberá copiarse a sí mismo y una de sus copias podrá visitar o abrir un directorio distinto al visitado o abierto por el proceso original. Verificar los permisos de un directorio no constituye haberlo visitado ni abierto.</p></li>
+<li><p>La comunicación entre varios procesos resultantes de una ejecución de <code>rautomake</code> solo podrá hacerse a través de estados de salida y señales del sistema operativo, a menos que uno de los procesos involucrados sea un compilador de C, en cuyo caso es aceptable la comunicación a través de archivos.</p></li>
+<li><p>A menos que este documento haga una excepción explícita particular, <code>rautomake</code> <strong>debe</strong> manejar explícitamente absolutamente todos los efectos y resultados de llamadas al sistema o a bibliotecas que puedan afectar al flujo de ejecución de su implementación de <code>rautomake</code>. En particular, si su implementación de <code>rautomake</code> deja de revisar una posible condición de error en el retorno de una llamada al sistema o a alguna biblioteca que utilice, incluyendo la biblioteca estándar de C, se esperará que usted pueda demostrar que el flujo de ejecución de su programa nunca depende de esa condición.</p></li>
+</ol>
+</div>
+<div class="section level2" id="condiciones-de-ejecución">
+<h2><a href="#TOC"><span class="header-section-number">2.2</span> Condiciones de ejecución</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>Esta subsección define propiedades que <code>rautomake</code> puede suponer que cumple el ambiente donde será ejecutado, y no es necesario que sean verificadas explícitamente.</p></li>
+<li><p><code>rautomake</code> podrá suponer que no existe ningún archivo o subdirectorio dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre no sea una secuencia de caracteres alfanuméricos de ASCII, o el caracter “FULL STOP”, también llamado “punto” (<code>U+002E</code>, “<code>.</code>”); podrá suponer lo mismo, además, del nombre del directorio donde es ejecutado.</p></li>
+<li><p><code>rautomake</code> podrá suponer que no existe ningún archivo dentro del directorio donde es ejecutado, ni dentro de ninguno de sus subdirectorios, cuyo nombre termine en “.d”. Si tales archivos existen, <code>rautomake</code> podrá eliminarlos o sobreescribirlos para cualquier fin. <code>rautomake</code> no será ejecutado en un directorio donde existan archivos con nombres de esa forma sobre los que no tenga permiso de lectura y escritura. <code>rautomake</code> no será ejecutado en un directorio que tenga algún subdirectorio directo o indirecto cuyo nombre termine en “.d”.</p></li>
+<li><p><code>rautomake</code> podrá suponer que no existe ninguna entrada del directorio donde es ejecutado, ni de ninguno de sus subdirectorios, que no sea un archivo regular o un directorio.</p></li>
+</ol>
+</div>
+<div class="section level2" id="entrega">
+<h2><a href="#TOC"><span class="header-section-number">2.3</span> Entrega</a></h2>
+<ol style="list-style-type: decimal">
+<li><p>El código principal de <code>rautomake</code> debe estar escrito en el lenguaje de programación C en cualquiera de sus versiones, debe poder compilarse con las herramientas GNU disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux; en particular, debe poder compilarse y ejecutarse en las computadoras del LDC.</p></li>
+<li><p>La entrega consistirá de un archivo en formato <code>tar.gz</code> o <code>tar.bz2</code> que contenga todo el código que haya desarrollado y sea necesario para compilar su programa. No debe incluir archivos compilados. Su proyecto debe poder compilarse extrayendo los archivos del paquete de su entrega, entrando en el directorio generado por la extracción, y ejecutando el comando <code>make</code>; es decir que <em>debe</em> incluir al menos un <code>Makefile</code> para automatizar la compilación de su proyecto.</p></li>
+<li><p>Aunque en general es preferible que su código sea compatible con los documentos de estandarización más recientes publicados para cada tecnología que utilice, es aceptable que requiera y use extensiones propias de la implementación de las herramientas de la plataforma GNU/Linux tanto del lenguaje de programación C como de la interfaz con el sistema operativo. Es aceptable que requiera alguna versión de las herramientas del sistema diferente de las que están instaladas y disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux, y en particular de lo que esté instalado y disponible en las computadoras del LDC, pero deberá justificar estos requerimientos adicionales.</p></li>
+<li><p>Deberá enviar su entrega a la plataforma asociada al curso, en la sección que será creada para este fin, antes de las 13:00 HLV<sup><a href="#fn1" class="footnoteRef" id="fnref1">1</a></sup> del lunes 2012–03–26 (semana 12 del trimestre en curso).</p></li>
+</ol>
+<hr />
+</div>
+</div>
+<div class="section level1" id="información-adicional">
+<h1><a href="#TOC"><span class="header-section-number">3</span> Información adicional</a></h1>
+<p><em>Esta sección es informativa.</em></p>
+<ol style="list-style-type: decimal">
+<li><p>Este proyecto está diseñado para instruir en el uso del lenguaje C, herramientas de desarrollo de software como <code>make</code> y <code>gcc</code>, y la interfaz de programación de los sistemas operativos que implementan los estándares POSIX<sup><a href="#fn2" class="footnoteRef" id="fnref2">2</a></sup>, y particularmente todo lo relacionado con el acceso a archivos y directorios y la comunicación entre procesos. El diseño del proyecto, y por lo tanto de la herramienta que usted debe implementar, está orientado a ese propósito educativo y no necesariamente obedece a los criterios de diseño adecuados para la creación de un <em>build system</em>.</p></li>
+<li><p>En particular, aunque el uso recursivo de <code>make</code> que este proyecto propone es sin duda muy similar a las prácticas comunes de muchos proyectos de software de gran envergadura, esta técnica sufre de problemas importantes y hay buenas razones para <em>no</em> usarla. Varios de estos problemas se exploran en Miller, 1997<sup><a href="#fn3" class="footnoteRef" id="fnref3">3</a></sup> (disponible en <a href="http://aegis.sourceforge.net/auug97.pdf">PDF</a>); ese artículo es un buen comienzo si es de su interés conocer la manera <em>correcta</em> de usar <code>make</code> con proyectos divididos en múltiples directorios.</p></li>
+</ol>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Hora legal de Venezuela (UTC−04:30).<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p><a href="http://pubs.opengroup.org/onlinepubs/9699919799">Documentos de POSIX.1‐2008</a> (también llamado “IEEE Std 1003.1™‐2008”, o “The Open Group Technical Standard Base Specifications, Issue 7”)<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p><a href="http://miller.emu.id.au/pmiller/books/rmch/">Peter Miller — Recursive make considered harmful (1997)</a><a href="#fnref3">↩</a></p></li>
+</ol>
+</div>
+</body>
+</html>

@@ -5,7 +5,7 @@ tags
 *.o
 *.out
 *.log
-*.html
-*.txt
-*.pdf
+proyecto2.html
+proyecto2.txt
+proyecto2.pdf
 proyecto2.tex
