@@ -79,16 +79,17 @@ Objetivos
         proyectos.
 
     2.  El programa que interpreta sus `Makefile`s y ejecuta acciones
-        descritas en ellos,
-        [`make`](https://www.gnu.org/software/make "La implementación del proyecto GNU del build system básico tradicionalmente encontrado en UNIX."),
-        también puede considerarse un *build system*.
+        descritas en ellos, [`make`](https://www.gnu.org/software/make
+        (La implementación del proyecto GNU del build system básico
+        tradicionalmente encontrado en UNIX.)), también puede
+        considerarse un *build system*.
 
     3.  Existen *build system*s que trabajan a un nivel más alto, como
         [GNU Automake](https://www.gnu.org/software/automake) y [GNU
         Autoconf](https://www.gnu.org/software/autoconf) que son dos de
-        los componentes del [GNU build
-        system](https://www.gnu.org/software/automake/manual/html_node/GNU-Build-System),
-        también conocido como *Autotools*. Este sistema puede generar
+        los componentes del [GNU build system](
+        https://www.gnu.org/software/automake/manual/html_node/GNU-Build-System
+        ), también conocido como *Autotools*. Este sistema puede generar
         `Makefile`s automáticamente ajustados a las peculiaridades de
         cada tipo de sistema UNIX y cada proyecto, lo que lo hace
         adecuado para proyectos de gran escala que deban funcionar en
@@ -165,7 +166,6 @@ Compilación separada por directorios
     `multidoc/src/asm/x86` debería contener un `Makefile` que diga, por
     ejemplo,
 
-~~~~ {.Makefile}
         .PHONY: all
         all: x86.a
 
@@ -174,11 +174,10 @@ Compilación separada por directorios
 
         parse.o: parse.c parse.h opcodes.h
         opcodes.o: opcodes.c opcodes.h
-~~~~
 
 5.  El comando
 
-        ar rT archivo.a elemento1 elemento2 ...
+        ar rT archivo.a elemento1 elemento2 …
 
     crea un archivo de colección llamado `archivo.a` que contendrá
     referencias al código compilado de `elemento1`, `elemento2`, etc. Si
@@ -202,11 +201,10 @@ Compilación separada por directorios
     las referencias a los elementos de las colecciones de sus
     subdirectorios:
 
-~~~~ {.Makefile}
         .PHONY: all force
         all: asm.a
 
-        asm.a: x86/x86.a mips/mips.a asm.o marmota.o ...
+        asm.a: x86/x86.a mips/mips.a asm.o marmota.o …
         	ar rT $@ $?
 
         x86/x86.a: force
@@ -217,8 +215,7 @@ Compilación separada por directorios
 
         asm.o: asm.c asm.h marmota.h archs.h
         marmota.o: marmota.c marmota.h archs.h
-        ...
-~~~~
+        …
 
 7.  El nuevo archivo de colección `x86/x86.a` contendrá referencias a
     todo el código compilado correspondiente a ese directorio y a todos
@@ -246,11 +243,10 @@ Compilación separada por directorios
     directorio `multidoc/src` sí tiene subdirectorios con código fuente,
     tendría un `Makefile` similar al de `multidoc/src/asm`:
 
-~~~~ {.Makefile}
         .PHONY: all force
         all: src.a
 
-        src.a: c/c.a cc/cc.a asm/asm.a java/java.a multidoc.o xml.o ...
+        src.a: c/c.a cc/cc.a asm/asm.a java/java.a multidoc.o xml.o …
         	ar rT $@ $?
 
         c/c.a: force
@@ -267,8 +263,7 @@ Compilación separada por directorios
 
         multidoc.o: multidoc.c multidoc.h xml.h asm/archs.h
         xml.o: xml.c xml.h asm/archs.h
-        ...
-~~~~
+        …
 
 10. Finalmente, en el directorio principal del proyecto se compilarán
     todos los archivos compilables que estén directamente en él, y se
@@ -277,11 +272,10 @@ Compilación separada por directorios
     debe ser un ejecutable. En el directorio principal del proyecto
     podría haber, por ejemplo, este `Makefile`:
 
-~~~~ {.Makefile}
         .PHONY: all force
         all: multidoc
 
-        multidoc: src/src.a lib/lib.a main.o args.o ...
+        multidoc: src/src.a lib/lib.a main.o args.o …
         	$(CC) $(CPPFLAGS) $(CCFLAGS) -o $@ $^
 
         src/src.a: force
@@ -292,8 +286,7 @@ Compilación separada por directorios
 
         main.o: main.c main.h args.h
         args.o: args.c args.h
-        ...
-~~~~
+        …
 
 11. La secuencia `$^` en una receta de una regla se sustituye con los
     nombres de todos los prerequisitos de la regla separados por espacio
@@ -410,41 +403,39 @@ Ejecución de programas con `exec`
     compilador de C que calculará las dependencias del código fuente del
     mismo programa) y capturar su estado de salida.
 
-~~~~ {.C}
-#include <stdio.h>     /* printf, puts, perror */
-#include <stdlib.h>    /* exit */
-#include <sys/wait.h>  /* wait */
-#include <unistd.h>    /* fork, execlp */
+        #include <stdio.h>     /* printf, puts, perror */
+        #include <stdlib.h>    /* exit */
+        #include <sys/wait.h>  /* wait */
+        #include <unistd.h>    /* fork, execlp */
 
-#define do { PERROR_EXIT(s) perror(s); exit(EXIT_FAILURE); } while (0)
+        #define PERROR_EXIT(s) do { perror(s); exit(EXIT_FAILURE); } while (0)
 
-int main() {
-        int status;
+        int main() {
+                int status;
 
-        switch(fork()) {
-                case -1:
-                        PERROR_EXIT("fork");
+                switch(fork()) {
+                        case -1:
+                                PERROR_EXIT("fork");
 
-                case  0:
-                        execlp("cc", "cc", "-E", "-MM", __FILE__, NULL);
-                        PERROR_EXIT("execlp");
+                        case  0:
+                                execlp("cc", "cc", "-E", "-MM", __FILE__, NULL);
+                                PERROR_EXIT("execlp");
 
-                default:
-                        break;
+                        default:
+                                break;
+                }
+
+                if (wait(&status) == -1) PERROR_EXIT("wait");
+
+                if (!WIFEXITED(status)) puts("El hijo terminó de forma irregular.");
+                else {
+                        printf(
+                                "El hijo terminó con el estado de salida %d\n",
+                                WEXITSTATUS(status)
+                        );
+                }
+                exit(EXIT_SUCCESS);
         }
-
-        if (wait(&status) == -1) PERROR_EXIT("wait");
-
-        if (!WIFEXITED(status)) puts("El hijo terminó de forma irregular.");
-        else {
-                printf(
-                        "El hijo terminó con el estado de salida %d\n",
-                        WEXITSTATUS(status)
-                );
-        }
-        exit(EXIT_SUCCESS);
-}
-~~~~
 
 * * * * *
 
@@ -578,9 +569,9 @@ Entrega
 -------
 
 1.  El código principal de `rautomake` debe estar escrito en el lenguaje
-    de programación C en cualquiera de sus versiones, debe poder
+    de programación C en cualquiera de sus versiones, y debe poder
     compilarse con las herramientas GNU disponibles en la versión
-    estable más reciente al momento de la entrega de Debian GNU/Linux;
+    estable de Debian GNU/Linux más reciente al momento de la entrega;
     en particular, debe poder compilarse y ejecutarse en las
     computadoras del LDC.
 
@@ -599,8 +590,8 @@ Entrega
     GNU/Linux tanto del lenguaje de programación C como de la interfaz
     con el sistema operativo. Es aceptable que requiera alguna versión
     de las herramientas del sistema diferente de las que están
-    instaladas y disponibles en la versión estable más reciente al
-    momento de la entrega de Debian GNU/Linux, y en particular de lo que
+    instaladas y disponibles en la versión estable de Debian GNU/Linux
+    más reciente al momento de la entrega, y en particular de lo que
     esté instalado y disponible en las computadoras del LDC, pero deberá
     justificar estos requerimientos adicionales.
 

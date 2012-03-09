@@ -98,79 +98,138 @@ multidoc/test         # Pruebas de correctitud del proyecto</code></pre></li>
 <li><p>A partir de los archivos de código fuente (los <code>.c</code>) de cada subdirectorio serán generados sus correspondientes archivos de objeto (los <code>.o</code>). El objetivo del proceso de compilación es reunir todo el código generado (todos los <code>.o</code>) para crear finalmente un archivo ejecutable en la raíz de la jerarquía de directorios del proyecto (que es el producto final del proyecto ficticio <code>multidoc</code>). Para facilitar este proceso, en cada subdirectorio debería crearse un archivo <code>.a</code> que contenga la <em>colección de todos los <code>.o</code></em> de ese subdirectorio (y de los subdirectorios que contenga). Luego, el <em>directorio padre</em> de ese subdirectorio podría hacer lo mismo con sus archivos de código fuente, y en su colección incluir a sus archivos de objeto y a las <em>colecciones</em> (los <code>.a</code>) de todos sus directorios hijos.</p></li>
 <li><p>Por ejemplo, suponga que en <code>multidoc/src/asm/x86</code> existen dos archivos de código fuente a compilar: <code>parse.c</code> y <code>opcodes.c</code>. Suponga además que <code>opcodes.c</code> incluye a un archivo de encabezado <code>opcodes.h</code>, y que <code>parse.c</code> incluye a <code>parse.h</code>, y <code>parse.h</code> a su vez también incluye a <code>opcodes.h</code>. El directorio <code>multidoc/src/asm/x86</code> debería contener un <code>Makefile</code> que diga, por ejemplo,</p></li>
 </ol>
-<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all
-        <span class="dv">all:</span> x86.a
+<table class="sourceCode Makefile numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="sourceCode"><pre><code class="sourceCode makefile"><span class="ot">.PHONY:</span> all
+<span class="dv">all:</span> x86.a
 
-        x86.a<span class="ch">:</span> parse.o opcodes.o
-        	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
+x86.a<span class="ch">:</span> parse.o opcodes.o
+	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
 
-        parse.o<span class="ch">:</span> parse.c parse.h opcodes.h
-        opcodes.o<span class="ch">:</span> opcodes.c opcodes.h</code></pre>
+parse.o<span class="ch">:</span> parse.c parse.h opcodes.h
+opcodes.o<span class="ch">:</span> opcodes.c opcodes.h</code></pre></td></tr></table>
 <ol start="5" style="list-style-type: decimal">
 <li><p>El comando</p>
-<pre><code>ar rT archivo.a elemento1 elemento2 ...</code></pre>
+<pre><code>ar rT archivo.a elemento1 elemento2 …</code></pre>
 <p>crea un archivo de colección llamado <code>archivo.a</code> que contendrá referencias al código compilado de <code>elemento1</code>, <code>elemento2</code>, etc. Si alguno de esos elementos es a su vez un archivo de colección, se almacenarán referencias a sus elementos por separado en vez de al archivo de colección completo como uno de los miembros. La secuencia <code>$@</code> en la <em>receta</em> de una regla de un <code>Makefile</code> se sustituye por el nombre del archivo que causó que se corriera esa regla; en el caso de la regla cuya receta ejecuta al comando <code>ar</code>, <code>$@</code> se sustituye por <code>x86.a</code>. <code>$?</code> se sustituye por aquellas dependencias de la regla que deban actualizarse: por ejemplo, si acabamos de compilar de nuevo a <code>opcodes.c</code> y obtuvimos una nueva versión de <code>opcodes.o</code>, se actualizará la referencia a <code>opcodes.o</code> en el archivo de colección <code>x86.a</code>, pero si no se actualizó <code>parse.o</code>, no se sustituirá su referencia en la colección (porque no es necesario hacerlo).</p></li>
 <li><p>Suponga ahora que se hizo lo mismo en el directorio <code>multidoc/src/asm/mips</code>. En el directorio <code>multidoc/src/asm</code> sucede lo mismo, excepto que al archivo de colección habrá que insertarle las referencias a los elementos de las colecciones de sus subdirectorios:</p></li>
 </ol>
-<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all force
-        <span class="dv">all:</span> asm.a
+<table class="sourceCode Makefile numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre></td><td class="sourceCode"><pre><code class="sourceCode makefile"><span class="ot">.PHONY:</span> all force
+<span class="dv">all:</span> asm.a
 
-        asm.a<span class="ch">:</span> x86/x86.a mips/mips.a asm.o marmota.o ...
-        	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
+asm.a<span class="ch">:</span> x86/x86.a mips/mips.a asm.o marmota.o …
+	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
 
-        x86/x86.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C x86
+x86/x86.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C x86
 
-        mips/mips.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C mips
+mips/mips.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C mips
 
-        asm.o<span class="ch">:</span> asm.c asm.h marmota.h archs.h
-        marmota.o<span class="ch">:</span> marmota.c marmota.h archs.h
-        ...</code></pre>
+asm.o<span class="ch">:</span> asm.c asm.h marmota.h archs.h
+marmota.o<span class="ch">:</span> marmota.c marmota.h archs.h
+…</code></pre></td></tr></table>
 <ol start="7" style="list-style-type: decimal">
 <li><p>El nuevo archivo de colección <code>x86/x86.a</code> contendrá referencias a todo el código compilado correspondiente a ese directorio y a todos sus subdirectorios (recursivamente).</p></li>
 <li><p>Note que la regla <em>phony</em> “force” se utiliza como prerequisito para los archivos de colección de los subdirectorios; el efecto de esto es que <strong>siempre</strong> se harán las llamadas recursivas a <code>make</code> para los subdirectorios. Esto es necesario porque el <code>Makefile</code> de un directorio no tiene información sobre si es necesario actualizar el código compilado en un subdirectorio (si su <code>.c</code> o alguna de sus dependencias cambió). Sin embargo, el <code>Makefile</code> que está dentro de ese subdirectorio sí será capaz de determinar esto. Por lo tanto, la llamada recursiva se hace incondicionalmente, y si había algo que actualizar dentro de un subdirectorio, la invocación recursiva de <code>make</code> hará el trabajo y actualizará el archivo de colección de ese subdirectorio.</p></li>
 <li><p>Los directorios <code>multidoc/src/c</code>, <code>multidoc/src/cc</code> y <code>multidoc/src/java</code> tendrían <code>Makefile</code>s muy similares a los de los directorios <code>multidoc/src/asm/x86</code> y <code>multidoc/src/asm/mips</code>: como no tienen subdirectorios, solo especifican reglas con las dependencias de sus archivos de código fuente, y la regla que dice cómo se construye el archivo de colección de ese directorio. Como el directorio <code>multidoc/src</code> sí tiene subdirectorios con código fuente, tendría un <code>Makefile</code> similar al de <code>multidoc/src/asm</code>:</p></li>
 </ol>
-<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all force
-        <span class="dv">all:</span> src.a
+<table class="sourceCode Makefile numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="sourceCode"><pre><code class="sourceCode makefile"><span class="ot">.PHONY:</span> all force
+<span class="dv">all:</span> src.a
 
-        src.a<span class="ch">:</span> c/c.a cc/cc.a asm/asm.a java/java.a multidoc.o xml.o ...
-        	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
+src.a<span class="ch">:</span> c/c.a cc/cc.a asm/asm.a java/java.a multidoc.o xml.o …
+	ar rT <span class="ch">$</span>@ <span class="ch">$</span>?
 
-        c/c.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C c
+c/c.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C c
 
-        cc/cc.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C cc
+cc/cc.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C cc
 
-        asm/asm.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C asm
+asm/asm.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C asm
 
-        java/java.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C java
+java/java.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C java
 
-        multidoc.o<span class="ch">:</span> multidoc.c multidoc.h xml.h asm/archs.h
-        xml.o<span class="ch">:</span> xml.c xml.h asm/archs.h
-        ...</code></pre>
+multidoc.o<span class="ch">:</span> multidoc.c multidoc.h xml.h asm/archs.h
+xml.o<span class="ch">:</span> xml.c xml.h asm/archs.h
+…</code></pre></td></tr></table>
 <ol start="10" style="list-style-type: decimal">
 <li>Finalmente, en el directorio principal del proyecto se compilarán todos los archivos compilables que estén directamente en él, y se enlazarán todos sus archivos de objeto y todos los archivos de colección de los subdirectorios del proyecto. El resultado de esto debe ser un ejecutable. En el directorio principal del proyecto podría haber, por ejemplo, este <code>Makefile</code>:</li>
 </ol>
-<pre class="sourceCode Makefile"><code class="sourceCode makefile">        .PHONY<span class="ch">:</span> all force
-        <span class="dv">all:</span> multidoc
+<table class="sourceCode Makefile numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre></td><td class="sourceCode"><pre><code class="sourceCode makefile"><span class="ot">.PHONY:</span> all force
+<span class="dv">all:</span> multidoc
 
-        <span class="dv">multidoc:</span> src/src.a lib/lib.a main.o args.o ...
-        	<span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CPPFLAGS</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CCFLAGS</span><span class="ch">)</span> -o <span class="ch">$</span>@ <span class="ch">$</span>^
+<span class="dv">multidoc:</span> src/src.a lib/lib.a main.o args.o …
+	<span class="ch">$(</span><span class="dt">CC</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CPPFLAGS</span><span class="ch">)</span> <span class="ch">$(</span><span class="dt">CCFLAGS</span><span class="ch">)</span> -o <span class="ch">$</span>@ <span class="ch">$</span>^
 
-        src/src.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C src
+src/src.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C src
 
-        lib/lib.a<span class="ch">:</span> force
-        	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C lib
+lib/lib.a<span class="ch">:</span> force
+	<span class="ch">$(</span><span class="dt">MAKE</span><span class="ch">)</span> -C lib
 
-        main.o<span class="ch">:</span> main.c main.h args.h
-        args.o<span class="ch">:</span> args.c args.h
-        ...</code></pre>
+main.o<span class="ch">:</span> main.c main.h args.h
+args.o<span class="ch">:</span> args.c args.h
+…</code></pre></td></tr></table>
 <ol start="11" style="list-style-type: decimal">
 <li><p>La secuencia <code>$^</code> en una receta de una regla se sustituye con los nombres de todos los prerequisitos de la regla separados por espacio (sin repeticiones). La receta mostrada en el ejemplo de <code>Makefile</code> anterior genera el ejecutable final del proyecto que contiene todo el código compilado de todos los archivos fuente del proyecto.</p></li>
 <li><p>Note que no se incluyó <code>doc/doc.a</code> ni <code>test/test.a</code> porque en el caso particular de este ejemplo esos serían directorios que no se usan para almacenar código fuente (ni directamente, ni en algún subdirectorio descendiente de ellos directa o indirectamente). Esto implica que no interesaría escribir <code>Makefile</code>s en estas ramas de la jerarquía de directorios, y claro, si no hay <code>Makefiles</code>, no habrá tampoco llamada recursiva de <code>make</code> en ellos.</p></li>
@@ -202,12 +261,45 @@ multidoc/test         # Pruebas de correctitud del proyecto</code></pre></li>
 <li><p>La familia de llamadas al sistema <code>exec</code> permite que un proceso sustituya su propio contenido por el de algún programa disponible en el sistema y comience a ejecutarlo. <code>exec</code> es el mecanismo básico que usan los programas de un sistema UNIX para producir a otros programas: primero se duplican llamando a <code>fork</code>, y el proceso hijo procede inmediatamente a ejecutar una de las funciones de la familia <code>exec</code> para ejecutar a otro programa.</p></li>
 <li><p>Este código demuestra un uso mínimo de <code>fork</code>, <code>wait</code> y <code>execlp</code> para ejecutar un programa instalado en el sistema (en particular, un compilador de C que calculará las dependencias del código fuente del mismo programa) y capturar su estado de salida.</p></li>
 </ol>
-<pre class="sourceCode C"><code class="sourceCode c"><span class="ot">#include &lt;stdio.h&gt;     </span><span class="co">/* printf, puts, perror */</span>
+<table class="sourceCode C numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+</pre></td><td class="sourceCode"><pre><code class="sourceCode c"><span class="ot">#include &lt;stdio.h&gt;     </span><span class="co">/* printf, puts, perror */</span>
 <span class="ot">#include &lt;stdlib.h&gt;    </span><span class="co">/* exit */</span>
 <span class="ot">#include &lt;sys/wait.h&gt;  </span><span class="co">/* wait */</span>
 <span class="ot">#include &lt;unistd.h&gt;    </span><span class="co">/* fork, execlp */</span>
 
-<span class="ot">#define do { PERROR_EXIT(s) perror(s); exit(EXIT_FAILURE); } while (0)</span>
+<span class="ot">#define PERROR_EXIT(s) do { perror(s); exit(EXIT_FAILURE); } while (0)</span>
 
 <span class="dt">int</span> main() {
         <span class="dt">int</span> status;
@@ -234,7 +326,7 @@ multidoc/test         # Pruebas de correctitud del proyecto</code></pre></li>
                 );
         }
         exit(EXIT_SUCCESS);
-}</code></pre>
+}</code></pre></td></tr></table>
 <hr />
 </div>
 </div>
@@ -271,9 +363,9 @@ multidoc/test         # Pruebas de correctitud del proyecto</code></pre></li>
 <div class="section level2" id="entrega">
 <h2><a href="#TOC"><span class="header-section-number">2.3</span> Entrega</a></h2>
 <ol style="list-style-type: decimal">
-<li><p>El código principal de <code>rautomake</code> debe estar escrito en el lenguaje de programación C en cualquiera de sus versiones, debe poder compilarse con las herramientas GNU disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux; en particular, debe poder compilarse y ejecutarse en las computadoras del LDC.</p></li>
+<li><p>El código principal de <code>rautomake</code> debe estar escrito en el lenguaje de programación C en cualquiera de sus versiones, y debe poder compilarse con las herramientas GNU disponibles en la versión estable de Debian GNU/Linux más reciente al momento de la entrega; en particular, debe poder compilarse y ejecutarse en las computadoras del LDC.</p></li>
 <li><p>La entrega consistirá de un archivo en formato <code>tar.gz</code> o <code>tar.bz2</code> que contenga todo el código que haya desarrollado y sea necesario para compilar su programa. No debe incluir archivos compilados. Su proyecto debe poder compilarse extrayendo los archivos del paquete de su entrega, entrando en el directorio generado por la extracción, y ejecutando el comando <code>make</code>; es decir que <em>debe</em> incluir al menos un <code>Makefile</code> para automatizar la compilación de su proyecto.</p></li>
-<li><p>Aunque en general es preferible que su código sea compatible con los documentos de estandarización más recientes publicados para cada tecnología que utilice, es aceptable que requiera y use extensiones propias de la implementación de las herramientas de la plataforma GNU/Linux tanto del lenguaje de programación C como de la interfaz con el sistema operativo. Es aceptable que requiera alguna versión de las herramientas del sistema diferente de las que están instaladas y disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux, y en particular de lo que esté instalado y disponible en las computadoras del LDC, pero deberá justificar estos requerimientos adicionales.</p></li>
+<li><p>Aunque en general es preferible que su código sea compatible con los documentos de estandarización más recientes publicados para cada tecnología que utilice, es aceptable que requiera y use extensiones propias de la implementación de las herramientas de la plataforma GNU/Linux tanto del lenguaje de programación C como de la interfaz con el sistema operativo. Es aceptable que requiera alguna versión de las herramientas del sistema diferente de las que están instaladas y disponibles en la versión estable de Debian GNU/Linux más reciente al momento de la entrega, y en particular de lo que esté instalado y disponible en las computadoras del LDC, pero deberá justificar estos requerimientos adicionales.</p></li>
 <li><p>Deberá enviar su entrega a la plataforma asociada al curso, en la sección que será creada para este fin, antes de las 13:00 HLV<sup><a href="#fn1" class="footnoteRef" id="fnref1">1</a></sup> del lunes 2012–03–26 (semana 12 del trimestre en curso).</p></li>
 </ol>
 <hr />

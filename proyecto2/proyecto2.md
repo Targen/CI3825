@@ -2,6 +2,8 @@
 % CI3825 (Sistemas de operación I)
 % Enero–Marzo 2012
 
+@@.pdf@.tex@@\fvset{frame=leftline,xleftmargin=6em}
+
 - - -
 
 **Este documento es solo una propuesta y no especifica requerimientos para ninguna evaluación.  No debe suponerse que alguna evaluación vaya a ser basada en él a menos que sea publicado oficialmente por los profesores a cargo del curso; en ese caso, la versión normativa del documento será la que se publique, que no contendrá esta nota, y esta versión será considerada inválida y no deberá ser usada como referencia para ningún propósito.**
@@ -80,44 +82,44 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 4.  Por ejemplo, suponga que en `multidoc/src/asm/x86` existen dos archivos de código fuente a compilar: `parse.c` y `opcodes.c`.  Suponga además que `opcodes.c` incluye a un archivo de encabezado `opcodes.h`, y que `parse.c` incluye a `parse.h`, y `parse.h` a su vez también incluye a `opcodes.h`.  El directorio `multidoc/src/asm/x86` debería contener un `Makefile` que diga, por ejemplo,
 
-```Makefile
-        .PHONY: all
-        all: x86.a
+~~~ {.Makefile .numberLines}
+.PHONY: all
+all: x86.a
 
-        x86.a: parse.o opcodes.o
-        	ar rT $@ $?
+x86.a: parse.o opcodes.o
+	ar rT $@ $?
 
-        parse.o: parse.c parse.h opcodes.h
-        opcodes.o: opcodes.c opcodes.h
-```
+parse.o: parse.c parse.h opcodes.h
+opcodes.o: opcodes.c opcodes.h
+~~~
 
 @@.pdf@.tex@@\newpage
 
 5.  El comando
 
-        ar rT archivo.a elemento1 elemento2 ...
+        ar rT archivo.a elemento1 elemento2 …
 
     crea un archivo de colección llamado `archivo.a` que contendrá referencias al código compilado de `elemento1`, `elemento2`, etc.  Si alguno de esos elementos es a su vez un archivo de colección, se almacenarán referencias a sus elementos por separado en vez de al archivo de colección completo como uno de los miembros.  La secuencia `$@` en la *receta* de una regla de un `Makefile` se sustituye por el nombre del archivo que causó que se corriera esa regla; en el caso de la regla cuya receta ejecuta al comando `ar`, `$@` se sustituye por `x86.a`.  `$?` se sustituye por aquellas dependencias de la regla que deban actualizarse: por ejemplo, si acabamos de compilar de nuevo a `opcodes.c` y obtuvimos una nueva versión de `opcodes.o`, se actualizará la referencia a `opcodes.o` en el archivo de colección `x86.a`, pero si no se actualizó `parse.o`, no se sustituirá su referencia en la colección (porque no es necesario hacerlo).
 
 6.  Suponga ahora que se hizo lo mismo en el directorio `multidoc/src/asm/mips`.  En el directorio `multidoc/src/asm` sucede lo mismo, excepto que al archivo de colección habrá que insertarle las referencias a los elementos de las colecciones de sus subdirectorios:
 
-```Makefile
-        .PHONY: all force
-        all: asm.a
+~~~ {.Makefile .numberLines}
+.PHONY: all force
+all: asm.a
 
-        asm.a: x86/x86.a mips/mips.a asm.o marmota.o ...
-        	ar rT $@ $?
+asm.a: x86/x86.a mips/mips.a asm.o marmota.o …
+	ar rT $@ $?
 
-        x86/x86.a: force
-        	$(MAKE) -C x86
+x86/x86.a: force
+	$(MAKE) -C x86
 
-        mips/mips.a: force
-        	$(MAKE) -C mips
+mips/mips.a: force
+	$(MAKE) -C mips
 
-        asm.o: asm.c asm.h marmota.h archs.h
-        marmota.o: marmota.c marmota.h archs.h
-        ...
-```
+asm.o: asm.c asm.h marmota.h archs.h
+marmota.o: marmota.c marmota.h archs.h
+…
+~~~
 
 7.  El nuevo archivo de colección `x86/x86.a` contendrá referencias a todo el código compilado correspondiente a ese directorio y a todos sus subdirectorios (recursivamente).
 
@@ -127,49 +129,49 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 @@.pdf@.tex@@\newpage
 
-```Makefile
-        .PHONY: all force
-        all: src.a
+~~~ {.Makefile .numberLines}
+.PHONY: all force
+all: src.a
 
-        src.a: c/c.a cc/cc.a asm/asm.a java/java.a multidoc.o xml.o ...
-        	ar rT $@ $?
+src.a: c/c.a cc/cc.a asm/asm.a java/java.a multidoc.o xml.o …
+	ar rT $@ $?
 
-        c/c.a: force
-        	$(MAKE) -C c
+c/c.a: force
+	$(MAKE) -C c
 
-        cc/cc.a: force
-        	$(MAKE) -C cc
+cc/cc.a: force
+	$(MAKE) -C cc
 
-        asm/asm.a: force
-        	$(MAKE) -C asm
+asm/asm.a: force
+	$(MAKE) -C asm
 
-        java/java.a: force
-        	$(MAKE) -C java
+java/java.a: force
+	$(MAKE) -C java
 
-        multidoc.o: multidoc.c multidoc.h xml.h asm/archs.h
-        xml.o: xml.c xml.h asm/archs.h
-        ...
-```
+multidoc.o: multidoc.c multidoc.h xml.h asm/archs.h
+xml.o: xml.c xml.h asm/archs.h
+…
+~~~
 
 10.  Finalmente, en el directorio principal del proyecto se compilarán todos los archivos compilables que estén directamente en él, y se enlazarán todos sus archivos de objeto y todos los archivos de colección de los subdirectorios del proyecto.  El resultado de esto debe ser un ejecutable.  En el directorio principal del proyecto podría haber, por ejemplo, este `Makefile`:
 
-```Makefile
-        .PHONY: all force
-        all: multidoc
+~~~ {.Makefile .numberLines}
+.PHONY: all force
+all: multidoc
 
-        multidoc: src/src.a lib/lib.a main.o args.o ...
-        	$(CC) $(CPPFLAGS) $(CCFLAGS) -o $@ $^
+multidoc: src/src.a lib/lib.a main.o args.o …
+	$(CC) $(CPPFLAGS) $(CCFLAGS) -o $@ $^
 
-        src/src.a: force
-        	$(MAKE) -C src
+src/src.a: force
+	$(MAKE) -C src
 
-        lib/lib.a: force
-        	$(MAKE) -C lib
+lib/lib.a: force
+	$(MAKE) -C lib
 
-        main.o: main.c main.h args.h
-        args.o: args.c args.h
-        ...
-```
+main.o: main.c main.h args.h
+args.o: args.c args.h
+…
+~~~
 
 11. La secuencia `$^` en una receta de una regla se sustituye con los nombres de todos los prerequisitos de la regla separados por espacio (sin repeticiones).  La receta mostrada en el ejemplo de `Makefile` anterior genera el ejecutable final del proyecto que contiene todo el código compilado de todos los archivos fuente del proyecto.
 
@@ -211,13 +213,13 @@ Este documento es un borrador, y se espera que tenga deficiencias de diseño, de
 
 2.  Este código demuestra un uso mínimo de `fork`, `wait` y `execlp` para ejecutar un programa instalado en el sistema (en particular, un compilador de C que calculará las dependencias del código fuente del mismo programa) y capturar su estado de salida.
 
-```C
+~~~ {.C .numberLines}
 #include <stdio.h>     /* printf, puts, perror */
 #include <stdlib.h>    /* exit */
 #include <sys/wait.h>  /* wait */
 #include <unistd.h>    /* fork, execlp */
 
-#define do { PERROR_EXIT(s) perror(s); exit(EXIT_FAILURE); } while (0)
+#define PERROR_EXIT(s) do { perror(s); exit(EXIT_FAILURE); } while (0)
 
 int main() {
         int status;
@@ -245,7 +247,7 @@ int main() {
         }
         exit(EXIT_SUCCESS);
 }
-```
+~~~
 
 
 
@@ -301,11 +303,11 @@ int main() {
 
 ## Entrega
 
-1.  El código principal de `rautomake` debe estar escrito en el lenguaje de programación C en cualquiera de sus versiones, debe poder compilarse con las herramientas GNU disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux; en particular, debe poder compilarse y ejecutarse en las computadoras del LDC.
+1.  El código principal de `rautomake` debe estar escrito en el lenguaje de programación C en cualquiera de sus versiones, y debe poder compilarse con las herramientas GNU disponibles en la versión estable de Debian GNU/Linux más reciente al momento de la entrega; en particular, debe poder compilarse y ejecutarse en las computadoras del LDC.
 
 2.  La entrega consistirá de un archivo en formato `tar.gz` o `tar.bz2` que contenga todo el código que haya desarrollado y sea necesario para compilar su programa.  No debe incluir archivos compilados.  Su proyecto debe poder compilarse extrayendo los archivos del paquete de su entrega, entrando en el directorio generado por la extracción, y ejecutando el comando `make`; es decir que *debe* incluir al menos un `Makefile` para automatizar la compilación de su proyecto.
 
-3.  Aunque en general es preferible que su código sea compatible con los documentos de estandarización más recientes publicados para cada tecnología que utilice, es aceptable que requiera y use extensiones propias de la implementación de las herramientas de la plataforma GNU/Linux tanto del lenguaje de programación C como de la interfaz con el sistema operativo.  Es aceptable que requiera alguna versión de las herramientas del sistema diferente de las que están instaladas y disponibles en la versión estable más reciente al momento de la entrega de Debian GNU/Linux, y en particular de lo que esté instalado y disponible en las computadoras del LDC, pero deberá justificar estos requerimientos adicionales.
+3.  Aunque en general es preferible que su código sea compatible con los documentos de estandarización más recientes publicados para cada tecnología que utilice, es aceptable que requiera y use extensiones propias de la implementación de las herramientas de la plataforma GNU/Linux tanto del lenguaje de programación C como de la interfaz con el sistema operativo.  Es aceptable que requiera alguna versión de las herramientas del sistema diferente de las que están instaladas y disponibles en la versión estable de Debian GNU/Linux más reciente al momento de la entrega, y en particular de lo que esté instalado y disponible en las computadoras del LDC, pero deberá justificar estos requerimientos adicionales.
 
 4.  Deberá enviar su entrega a la plataforma asociada al curso, en la sección que será creada para este fin, antes de las 13:00 HLV[^HLV] del lunes 2012–03–26 (semana 12 del trimestre en curso).
 
