@@ -6,7 +6,9 @@ Si están usando las primitivas de bajo nivel para la manipulación de archivos 
 
 Si están usando las funciones de la biblioteca estándar de C para manipulación de archivos (`fopen`, `fprintf`, `fscanf`, `feof`, etc), usarían `fseek`.
 
->   ya que para el proyecto es necesario colocar al principio en el makefile algunas cosas
+- - -
+
+>   ya que para el proyecto es necesario colocar al principio en el makefile algunas cosas pero que dependen de unas que se hicieron mas abajo
 
 Los ejemplos publicados junto con el enunciado, tanto en su sección introductoria como en el paquete de código de ejemplo distribuido con el documento de especificación del proyecto, siguen en efecto un cierto formato en sus Makefiles que se deriva de razones pedagógicas y de consistencia.
 
@@ -14,7 +16,9 @@ Sin embargo, el enunciado del proyecto no establece requerimientos sobre el cód
 
 En particular, el enunciado no especifica que las reglas deban ocurrir en los Makefiles generados en algún orden específico.
 
->   pero que dependen de unas que se hicieron mas abajo entonces luego de escribir en el archivo debo modificar algunas cosas pero debo hacerlo en el comienzo del archivo, como puedo hacer esto ? Es que solo consegui informacion sobre como mover el offset para descriptores del tipo FILE.
+- - -
+
+>   entonces luego de escribir en el archivo debo modificar algunas cosas pero debo hacerlo en el comienzo del archivo, como puedo hacer esto ? Es que solo consegui informacion sobre como mover el offset para descriptores del tipo FILE.
 
 Si quieren generar los Makefiles con el mismo formato de los ejemplos (que, insisto, no es necesario según los requerimientos formales del enunciado), se me ocurren varias estrategias:
 
