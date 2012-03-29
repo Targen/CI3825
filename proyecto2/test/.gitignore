@@ -1,0 +1,12 @@
+*~
+.*.swp*
+tags
+*.gch
+*.o
+*.out
+*.log
+*.a
+README.html
+README.txt
+README.pdf
+README.tex

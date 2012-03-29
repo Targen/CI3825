@@ -1,0 +1,18 @@
+SHELL = bash
+
+.PHONY: all clean distclean
+
+all: gen Makefile.ref
+
+gen: gen.sh
+	./gen.sh
+
+Makefile.ref: Makefile.ref.header $(wildcard *.c) $(wildcard *.h)
+	cp -f Makefile.ref{.header,}
+	gcc -MM ./*.c >> $@
+
+clean:
+	rm -f ./*.o depth0
+
+distclean: clean
+	rm -f d0x*x*.{h,c} Makefile.ref main.c

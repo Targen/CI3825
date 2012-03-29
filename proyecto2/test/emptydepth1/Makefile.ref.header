@@ -1,0 +1,8 @@
+.PHONY: clean
+
+emptydepth1:
+	gcc -o $@ $^
+
+clean:
+	rm -f ./*.o ./*/*.o emptydepth1
+

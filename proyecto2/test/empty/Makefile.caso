@@ -1,0 +1,11 @@
+SHELL = bash
+
+.PHONY: all distclean
+
+all: gen
+
+gen: gen.sh
+	./gen.sh
+
+distclean:
+	rm -rf dir*

@@ -1,0 +1,8 @@
+.PHONY: clean
+
+permsdepth0:
+	gcc -o $@ $^
+
+clean:
+	rm -f ./*.o permsdepth0
+

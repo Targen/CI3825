@@ -1,0 +1,5 @@
+*.h
+*.c
+Makefile
+Makefile.ref
+permsdepth0

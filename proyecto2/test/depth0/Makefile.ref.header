@@ -1,0 +1,10 @@
+.PHONY: clean
+
+sources = $(wildcard *.c)
+
+depth0: $(sources:%.c=%.o)
+	gcc -o $@ $^
+
+clean:
+	rm -f ./*.o depth0
+

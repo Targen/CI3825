@@ -1,0 +1,6 @@
+*.h
+*.c
+subdir*
+Makefile
+Makefile.ref
+emptydepth1

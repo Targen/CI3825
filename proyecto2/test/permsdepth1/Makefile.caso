@@ -1,0 +1,18 @@
+SHELL = bash
+
+.PHONY: all clean distclean
+
+all: gen Makefile.ref
+
+gen: gen.sh
+	./gen.sh
+
+Makefile.ref: Makefile.ref.header $(wildcard *.c) $(wildcard *.h)
+	cp -f Makefile.ref{.header,}
+	for i in ./*/*.c ./*.c; do [[ -r $$i ]] && { gcc -MM "$$i"; echo "permsdepth1: $${i%.c}.o"; } >> $@; done
+
+clean:
+	rm -f ./*.o ./*/*.o permsdepth1
+
+distclean: clean
+	rm -rf subdir* Makefile.ref main.c
