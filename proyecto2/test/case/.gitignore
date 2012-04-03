@@ -1,0 +1,7 @@
+subdir*
+*.h
+*.c
+[mM]akefile
+*.d
+*.a
+Makefile.ref

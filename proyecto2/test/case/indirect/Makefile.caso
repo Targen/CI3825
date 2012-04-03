@@ -1,0 +1,15 @@
+SHELL = bash
+
+.PHONY: all clean distclean
+
+all: gen Makefile.ref
+
+gen Makefile.ref: gen.sh
+	./gen.sh
+
+clean:
+	find . -type f -name '*.o' -exec rm -f {} +
+	rm -f indirect
+
+distclean: clean
+	rm -rf subdir* main.c Makefile.ref

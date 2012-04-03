@@ -1,6 +1,0 @@
-*.h
-*.c
-subdir*
-Makefile
-Makefile.ref
-depth2

@@ -1,0 +1,7 @@
+*~
+.*.swp*
+tags
+*.gch
+*.o
+*.out
+*.log
