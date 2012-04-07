@@ -8,4 +8,4 @@ gen: gen.sh
 	./gen.sh
 
 distclean:
-	rm -rf dir*
+	rm -rf subdir*
