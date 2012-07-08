@@ -1,17 +1,17 @@
 \documentclass[]{article}
+\usepackage{caption}
 \usepackage{xltxtra,xunicode}
 \usepackage{multirow}
+\usepackage[spanish]{polyglossia}
 \usepackage[landscape,margin=1.5cm]{geometry}
-%\defaultfontfeatures{Mapping=tex-text,Scale=MatchLowercase}
-%\setlength{\parindent}{0pt}
-%\setlength{\parskip}{6pt plus 2pt minus 1pt}
-%\setlength{\emergencystretch}{3em}  % prevent overfull lines
-%\setcounter{secnumdepth}{0}
+\pagestyle{empty}
 
 \begin{document}
         \newcommand{\NoE}{\textbf{*}}
         \newcommand{\NoN}{\textbf{—}}
 
+        \begin{table}[h!]
+        \begin{center}
         \begin{tabular}{ | r | l | l | r | r | r | r | }
                 \hline
                 Grupo & Carnet & Nombre & Tarea (5\%) & Proyecto 1 (18\%) & Proyecto 2 (7\%) & Quiz (10\%) \\
@@ -64,6 +64,7 @@
 
                 \hline
         \end{tabular}
-
-        Las notas marcadas con “\NoN” no están disponibles en este documento pero no necesariamente son nulas; la evaluación correspondiente fue realizada por otra persona.  Las notas marcadas con “\NoE” corresponden a evaluaciones no entregadas, injustificadas e irrecuperables.
+        \caption*{Las notas marcadas con “\NoN” no están disponibles en este documento pero no necesariamente son nulas; la evaluación correspondiente fue realizada por otra persona.  Las notas marcadas con “\NoE” corresponden a evaluaciones no entregadas, injustificadas e irrecuperables.}
+        \end{center}
+        \end{table}
 \end{document}
